@@ -1,4 +1,5 @@
 # Trackpal
+![Go](https://github.com/dimkouv/trackpal/workflows/Go/badge.svg)
 
 A location tracking application
 
