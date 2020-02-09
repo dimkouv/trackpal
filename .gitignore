@@ -1,0 +1,5 @@
+# IDE settings
+.idea/
+
+# Built artifacts
+.target
