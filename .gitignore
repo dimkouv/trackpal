@@ -3,3 +3,6 @@
 
 # Built artifacts
 .target
+
+# Go vendor dir
+vendor/
