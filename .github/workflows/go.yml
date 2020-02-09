@@ -21,4 +21,4 @@ jobs:
         go mod vendor
 
     - name: Test
-      make unit_test:
+      run: make unit_test
