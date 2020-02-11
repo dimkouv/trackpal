@@ -83,14 +83,22 @@ func TestTrackingRepositoryMock_GetAllTrackInputsOfDevice(t *testing.T) {
 	}
 
 	var results []models.TrackInput
+	var err error
 
 	t.Run("the records should be fetched correctly", func(t *testing.T) {
-		results = repo.GetAllTrackInputsOfDevice(1)
+		results, err = repo.GetAllTrackInputsOfDevice(1)
+		assert.NoError(t, err)
 		assert.Len(t, results, 3)
-		results = append(results, repo.GetAllTrackInputsOfDevice(2)...)
+
+		device2results, err := repo.GetAllTrackInputsOfDevice(2)
+		assert.NoError(t, err)
+		results = append(results, device2results...)
 		assert.Len(t, results, 5)
-		results = append(results, repo.GetAllTrackInputsOfDevice(3)...)
-		assert.Len(t, results, 5)
+
+		device3results, err := repo.GetAllTrackInputsOfDevice(3)
+		assert.Error(t, err)
+		assert.Equal(t, err, ErrDeviceNotExists)
+		assert.Len(t, device3results, 0)
 	})
 
 	t.Run("validate that the results are coming in timestamp ascending order", func(t *testing.T) {
