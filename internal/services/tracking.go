@@ -16,7 +16,11 @@ func (service TrackingService) SaveTrackInput(t models.TrackInput) {
 }
 
 func (service TrackingService) GetAllTrackInputsOfDeviceAsJSON(deviceID int64) ([]byte, error) {
-	return json.Marshal(service.repo.GetAllTrackInputsOfDevice(deviceID))
+	results, err := service.repo.GetAllTrackInputsOfDevice(deviceID)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(results)
 }
 
 // NewTrackingService receives a repository and returns a tracking service

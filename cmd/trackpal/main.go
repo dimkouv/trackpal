@@ -11,6 +11,6 @@ func main() {
 
 	trackingService := services.NewTrackingServiceMock()
 	trackpalServer := server.NewTrackpalServer(trackingService)
-	trackpalServer.RegisterRoutes()
-	trackpalServer.Listen(":8080")
+	routes := trackpalServer.RegisterRoutes()
+	trackpalServer.ListenAndServe(":8080", routes)
 }

@@ -1,9 +1,21 @@
 package server
 
-import "github.com/dimkouv/trackpal/internal/services"
+import (
+	"net/http"
+
+	"github.com/dimkouv/trackpal/internal/services"
+)
+
+type Route struct {
+	Name        string
+	Method      string
+	Pattern     string
+	HandlerFunc http.HandlerFunc
+}
 
 type TrackpalServer struct {
 	trackingService services.TrackingService
+	routes          []Route
 }
 
 func NewTrackpalServer(trackingService services.TrackingService) TrackpalServer {

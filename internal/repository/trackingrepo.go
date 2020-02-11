@@ -8,5 +8,5 @@ type TrackingRepository interface {
 	SaveNewTrackInput(t models.TrackInput)
 
 	// GetAllTrackInputsOfDevice returns all the tracking inputs that were recorded from the target device
-	GetAllTrackInputsOfDevice(deviceID int64) []models.TrackInput
+	GetAllTrackInputsOfDevice(deviceID int64) ([]models.TrackInput, error)
 }
