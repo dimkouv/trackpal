@@ -11,15 +11,27 @@ import (
 func (ts TrackpalServer) RegisterRoutes() *mux.Router {
 	ts.routes = []Route{
 		{
+			"GetDevices",
+			"GET",
+			"/devices",
+			ts.getDevices,
+		},
+		{
+			"CreateDevice",
+			"POST",
+			"/devices",
+			ts.createDevice,
+		},
+		{
 			"GetTrackRecords",
 			"GET",
-			"/track/{deviceID:[0-9]+}",
+			"/devices/{deviceID:[0-9]+}/entries",
 			ts.getTrackRecordsOfDevice,
 		},
 		{
 			"NewTrackRecord",
 			"POST",
-			"/track/{deviceID:[0-9]+}",
+			"/devices/{deviceID:[0-9]+}/entries",
 			ts.addTrackRecordOfDevice,
 		},
 	}
