@@ -37,5 +37,5 @@ jobs:
 
     - name: Integration test
       env:
-        POSTGRES_DSN: user=master password=masterkey dbname=trackpal sslmode=disable
+        POSTGRES_DSN: "user=master password=masterkey dbname=trackpal sslmode=disable"
       run: make integration_test
