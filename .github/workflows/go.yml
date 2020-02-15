@@ -36,4 +36,6 @@ jobs:
       run: make unit_test
 
     -name: Integration test
-      run: POSTGRES_DSN="user=master password=masterkey dbname=trackpal sslmode=disable" make integration_test
+      env:
+        POSTGRES_DSN: user=master password=masterkey dbname=trackpal sslmode=disable
+      run: make integration_test
