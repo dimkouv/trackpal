@@ -3,6 +3,18 @@ on: [push]
 jobs:
 
   build:
+    services:
+      postgres:
+        image: postgres:10.8
+        env:
+          POSTGRES_USER: master
+          POSTGRES_PASSWORD: masterkey
+          POSTGRES_DB: trackpal
+        ports:
+          - 5432:5432
+        # needed because the postgres container does not provide a healthcheck
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
     name: Build
     runs-on: ubuntu-latest
     steps:
@@ -20,5 +32,8 @@ jobs:
       run: |
         go mod vendor
 
-    - name: Test
+    - name: Unit Test
       run: make unit_test
+
+    -name: Integration test
+      run: POSTGRES_DSN="user=master password=masterkey dbname=trackpal sslmode=disable" make integration_test
