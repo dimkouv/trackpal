@@ -1,6 +1,11 @@
 package models
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
+
+const minDeviceNameLength = 4
 
 type Device struct {
 	ID   int64  `json:"id"`
@@ -16,8 +21,8 @@ func (d Device) Validate() error {
 		return errors.New("the device is empty")
 	}
 
-	if d.Name == "" {
-		return errors.New("the device does not have a name")
+	if len(d.Name) < minDeviceNameLength {
+		return fmt.Errorf("the device name should contain at least %d characters", minDeviceNameLength)
 	}
 
 	return nil
