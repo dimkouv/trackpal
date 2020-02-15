@@ -6,3 +6,6 @@
 
 # Go vendor dir
 vendor/
+
+# Built artifacts
+target/

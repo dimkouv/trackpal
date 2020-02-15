@@ -49,7 +49,7 @@ func (ts TrackpalServer) RegisterRoutes() *mux.Router {
 }
 
 // Listen starts listening for incoming requests
-func (ts TrackpalServer) ListenAndServe(addr string, router *mux.Router) {
+func (ts TrackpalServer) ListenAndServe(addr string, router http.Handler) {
 	logrus.Infof("Server running: addr=%s", addr)
 	if err := http.ListenAndServe(addr, router); err != nil {
 		panic(err)
