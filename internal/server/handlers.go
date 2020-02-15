@@ -48,7 +48,7 @@ func (ts TrackpalServer) addTrackRecordOfDevice(w http.ResponseWriter, req *http
 
 	switch err {
 	case nil:
-		response.HTTP(w).Data(b).Status(http.StatusOK).JSON()
+		response.HTTP(w).Data(b).Status(http.StatusCreated).JSON()
 	default:
 		response.HTTP(w).Error(err).Status(http.StatusBadRequest).JSON()
 	}
