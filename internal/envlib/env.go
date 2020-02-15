@@ -11,3 +11,11 @@ func GetEnvOrPanic(envVarKey string) string {
 	}
 	return v
 }
+
+func GetEnvOrDefault(envVarKey, defaultVal string) string {
+	v := os.Getenv(envVarKey)
+	if v == "" {
+		return defaultVal
+	}
+	return v
+}
