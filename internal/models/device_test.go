@@ -75,6 +75,8 @@ func TestDevice_Validate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		assert.Equal(t, tc.shouldBeValid, tc.device.Validate() == nil)
+		if !assert.Equal(t, tc.shouldBeValid, tc.device.Validate() == nil) {
+			t.Logf("%v", tc)
+		}
 	}
 }
