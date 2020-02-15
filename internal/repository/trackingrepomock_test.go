@@ -76,17 +76,17 @@ func TestTrackingRepositoryMock_SaveNewTrackInput(t *testing.T) {
 				Lat: 12.123,
 				Lng: 32.123,
 			},
-			Timestamp: time.Now(),
-			DeviceID:  123,
+			RecordedAt: time.Now(),
+			DeviceID:   123,
 		})
 		assert.Equal(t, ErrDeviceDoesNotExist, err)
 	})
 
 	t.Run("saving an invalid track input for an existing device should respond with error", func(t *testing.T) {
 		_, err := repo.SaveNewTrackInput(models.TrackInput{
-			Location:  models.Location{},
-			Timestamp: time.Now(),
-			DeviceID:  2,
+			Location:   models.Location{},
+			RecordedAt: time.Now(),
+			DeviceID:   2,
 		})
 		assert.Error(t, err)
 		assert.NotEqual(t, ErrDeviceDoesNotExist, err)
@@ -98,8 +98,8 @@ func TestTrackingRepositoryMock_SaveNewTrackInput(t *testing.T) {
 				Lat: 12.123,
 				Lng: 21.123,
 			},
-			Timestamp: time.Now(),
-			DeviceID:  2,
+			RecordedAt: time.Now(),
+			DeviceID:   2,
 		})
 		assert.NoError(t, err)
 	})
@@ -120,8 +120,8 @@ func TestTrackingRepositoryMock_GetAllTrackInputsOfDevice(t *testing.T) {
 				Lat: 12.123 + float64(i),
 				Lng: 21.123 + float64(i),
 			},
-			Timestamp: time.Now().Add(time.Duration(i) * time.Minute),
-			DeviceID:  dev2.ID,
+			RecordedAt: time.Now().Add(time.Duration(i) * time.Minute),
+			DeviceID:   dev2.ID,
 		}
 
 		trackInputs = append(trackInputs, ti)
@@ -135,7 +135,7 @@ func TestTrackingRepositoryMock_GetAllTrackInputsOfDevice(t *testing.T) {
 		for i := range trackInputs {
 			assert.Equal(t, trackInputs[i].DeviceID, tis[i].DeviceID)
 			assert.Equal(t, trackInputs[i].Location, tis[i].Location)
-			assert.Equal(t, trackInputs[i].Timestamp, tis[i].Timestamp)
+			assert.Equal(t, trackInputs[i].RecordedAt, tis[i].RecordedAt)
 		}
 	})
 

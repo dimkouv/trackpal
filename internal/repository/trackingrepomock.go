@@ -1,14 +1,9 @@
 package repository
 
 import (
-	"errors"
 	"sort"
 
 	"github.com/dimkouv/trackpal/internal/models"
-)
-
-var (
-	ErrDeviceDoesNotExist = errors.New("device does not exist")
 )
 
 type TrackingRepositoryMock struct {
@@ -56,7 +51,7 @@ func (repo *TrackingRepositoryMock) GetAllTrackInputsOfDevice(deviceID int64) ([
 	}
 
 	sort.Slice(trackInputs, func(i, j int) bool {
-		return trackInputs[i].Timestamp.Before(trackInputs[j].Timestamp)
+		return trackInputs[i].RecordedAt.Before(trackInputs[j].RecordedAt)
 	})
 
 	return trackInputs, nil

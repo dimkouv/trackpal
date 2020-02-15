@@ -7,8 +7,9 @@ import (
 
 // TrackInput contains a location, the time that it was recorded and the id of the device that recorded it.
 type TrackInput struct {
-	Location  Location  `json:"location"`
-	Timestamp time.Time `json:"timestamp"`
+	Location   Location  `json:"location"`
+	RecordedAt time.Time `json:"recorded_at" db:"recorded_at"`
+	CreatedAt  string    `json:"created_at" db:"created_at"`
 
 	DeviceID int64 `json:"-"`
 }

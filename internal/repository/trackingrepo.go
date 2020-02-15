@@ -1,6 +1,14 @@
 package repository
 
-import "github.com/dimkouv/trackpal/internal/models"
+import (
+	"errors"
+
+	"github.com/dimkouv/trackpal/internal/models"
+)
+
+var (
+	ErrDeviceDoesNotExist = errors.New("device does not exist")
+)
 
 // TrackingRepository contains methods for CRUD operations on tracking inputs
 type TrackingRepository interface {

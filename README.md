@@ -39,5 +39,9 @@ npm i docsify-cli -g
 postgres
 
 ```bash
-docker run --name postgres-local -e POSTGRES_PASSWORD=masterkey -d postgres
+docker run --name postgres-local \
+    -e POSTGRES_USER=master \
+    -e POSTGRES_DB=trackpal \
+    -e POSTGRES_PASSWORD=masterkey \
+    -p 5432:5432 -d postgres
 ```

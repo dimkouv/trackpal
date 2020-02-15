@@ -8,9 +8,18 @@ import (
 
 func main() {
 	logrus.SetLevel(logrus.DebugLevel)
+	logrus.SetFormatter(&logrus.TextFormatter{
+		ForceColors:     true,
+		FullTimestamp:   true,
+		TimestampFormat: "2 Jan 2006 15:04:05",
+	})
 
-	trackingService := services.NewTrackingServiceMock()
-	trackpalServer := server.NewTrackpalServer(trackingService)
+	trackingService, err := services.NewTrackingServicePostgres(postgresDSN)
+	if err != nil {
+		panic(err)
+	}
+
+	trackpalServer := server.NewTrackpalServer(*trackingService)
 	routes := trackpalServer.RegisterRoutes()
-	trackpalServer.ListenAndServe(":8080", routes)
+	trackpalServer.ListenAndServe(serverAddr, routes)
 }

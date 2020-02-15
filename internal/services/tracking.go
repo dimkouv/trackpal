@@ -170,3 +170,13 @@ func NewTrackingService(repo repository.TrackingRepository) TrackingService {
 func NewTrackingServiceMock() TrackingService {
 	return TrackingService{repo: repository.NewTrackingRepositoryMock()}
 }
+
+// NewTrackingServicePostgres returns a tracking service with a postgres repository
+func NewTrackingServicePostgres(postgresDSN string) (*TrackingService, error) {
+	repo, err := repository.NewTrackingRepositoryPostgres(postgresDSN)
+	if err != nil {
+		return nil, err
+	}
+
+	return &TrackingService{repo: repo}, nil
+}

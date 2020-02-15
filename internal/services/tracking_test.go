@@ -34,8 +34,11 @@ func TestTrackingService_GetDevicesAsJSON(t *testing.T) {
 		}
 
 		b, err := server.GetDevicesAsJSON()
+		assert.NoError(t, err)
+
 		err = json.Unmarshal(b, &devices)
 		assert.NoError(t, err)
+
 		for i := range createdDevices {
 			assert.Equal(t, createdDevices[i].Name, devices[i].Name)
 		}
