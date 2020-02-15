@@ -4,6 +4,7 @@ import (
 	"github.com/dimkouv/trackpal/internal/consts"
 	"github.com/dimkouv/trackpal/internal/models"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 )
@@ -12,24 +13,78 @@ type TrackingRepositoryPostgres struct {
 	db *sqlx.DB
 }
 
-func (t2 TrackingRepositoryPostgres) SaveNewTrackInput(t models.TrackInput) (*models.TrackInput, error) {
-	panic("implement me")
+func (t TrackingRepositoryPostgres) SaveNewTrackInput(trackInput models.TrackInput) (*models.TrackInput, error) {
+	if err := trackInput.Validate(); err != nil {
+		return nil, err
+	}
+
+	const sqlQuery = `insert into track_input(lat, lng, recorded_at, device_id) values ($1, $2, $3, $4) returning id`
+	if err := t.db.QueryRow(
+		sqlQuery,
+		trackInput.Location.Lat,
+		trackInput.Location.Lng,
+		trackInput.RecordedAt.UTC(),
+		trackInput.DeviceID,
+	).Scan(&trackInput.ID); err != nil {
+		pqErr := err.(*pq.Error)
+		if pqErr.Code == "23503" {
+			return nil, ErrDeviceDoesNotExist
+		}
+		return nil, err
+	}
+
+	return &trackInput, nil
 }
 
-func (t2 TrackingRepositoryPostgres) GetAllTrackInputsOfDevice(deviceID int64) ([]models.TrackInput, error) {
-	panic("implement me")
+func (t TrackingRepositoryPostgres) GetAllTrackInputsOfDevice(deviceID int64) ([]models.TrackInput, error) {
+	var trackInputs []models.TrackInput
+
+	const sqlQueryDeviceExists = `select exists(select 1 from device where id=$1)`
+	exists := false
+	if err := t.db.QueryRow(sqlQueryDeviceExists, deviceID).Scan(&exists); err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, ErrDeviceDoesNotExist
+	}
+
+	const sqlQuery = `select id, lat, lng, recorded_at, created_at from track_input where device_id=$1`
+	if err := t.db.Select(&trackInputs, sqlQuery, deviceID); err != nil {
+		return nil, err
+	}
+
+	return trackInputs, nil
 }
 
-func (t2 TrackingRepositoryPostgres) SaveNewDevice(d models.Device) (*models.Device, error) {
-	panic("implement me")
+func (t TrackingRepositoryPostgres) SaveNewDevice(d models.Device) (*models.Device, error) {
+	if err := d.Validate(); err != nil {
+		return nil, err
+	}
+
+	const sqlQuery = `insert into device(name) values ($1) returning id`
+	err := t.db.QueryRow(sqlQuery, d.Name).Scan(&d.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &d, nil
 }
 
-func (t2 TrackingRepositoryPostgres) GetDevices() ([]models.Device, error) {
-	panic("implement me")
+func (t TrackingRepositoryPostgres) GetDevices() ([]models.Device, error) {
+	trackInputs := make([]models.Device, 0)
+
+	const sqlQuery = `select id, name, created_at from device`
+	if err := t.db.Select(&trackInputs, sqlQuery); err != nil {
+		return nil, err
+	}
+
+	return trackInputs, nil
 }
 
 func NewTrackingRepositoryPostgres(postgresDSN string) (*TrackingRepositoryPostgres, error) {
 	db, err := sqlx.Connect("postgres", postgresDSN)
+
+	logrus.Debugf("attempting postgres connection with dsn=%s", postgresDSN)
 	if err != nil {
 		logrus.
 			WithField(consts.LogFieldErr, err).
