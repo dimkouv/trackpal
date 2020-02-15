@@ -9,7 +9,7 @@ unit_test: ## Performs unit testing with minimal output
 .PHONY: coverage
 coverage_file="/tmp/go-cover.$$.tmp"
 coverage: ## Creates a test coverage report
-	go test --tags="unit" -coverprofile=$coverage_file ./... && go tool cover -html=$coverage_file && unlink $coverage_file
+	go test --tags="unit_test" -coverprofile=$coverage_file ./... && go tool cover -html=$coverage_file && unlink $coverage_file
 
 .PHONY: build
 build: ## Compiles the server
