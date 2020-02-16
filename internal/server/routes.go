@@ -14,25 +14,25 @@ func (ts TrackpalServer) RegisterRoutes() *mux.Router {
 			Name:        "GetDevices",
 			Method:      "GET",
 			Pattern:     "/devices",
-			HandlerFunc: ts.getDevices,
+			HandlerFunc: ts.withUser(ts.getDevices),
 		},
 		{
 			Name:        "CreateDevice",
 			Method:      "POST",
 			Pattern:     "/devices",
-			HandlerFunc: ts.createDevice,
+			HandlerFunc: ts.withUser(ts.createDevice),
 		},
 		{
 			Name:        "GetTrackRecords",
 			Method:      "GET",
 			Pattern:     "/devices/{deviceID:[0-9]+}/entries",
-			HandlerFunc: ts.getTrackRecordsOfDevice,
+			HandlerFunc: ts.withUser(ts.getTrackRecordsOfDevice),
 		},
 		{
 			Name:        "NewTrackRecord",
 			Method:      "POST",
 			Pattern:     "/devices/{deviceID:[0-9]+}/entries",
-			HandlerFunc: ts.addTrackRecordOfDevice,
+			HandlerFunc: ts.withUser(ts.addTrackRecordOfDevice),
 		},
 	}
 

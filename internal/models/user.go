@@ -1,6 +1,8 @@
 package models
 
-import "errors"
+import (
+	"errors"
+)
 
 type UserAccount struct {
 	ID              int64  `json:"id" db:"id"`
@@ -22,4 +24,12 @@ func (ua UserAccount) Validate() error {
 	}
 
 	return nil
+}
+
+func (ua *UserAccount) FromJWT(jwt string) (*UserAccount, error) {
+	return ua, errors.New("unimplemented")
+}
+
+func NewUserAccount() *UserAccount {
+	return &UserAccount{}
 }
