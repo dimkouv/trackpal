@@ -36,6 +36,10 @@ func (service *TrackingService) SetUser(ua models.UserAccount) {
 	service.ua = ua
 }
 
+func (service *TrackingService) GetUser() models.UserAccount {
+	return service.ua
+}
+
 func (service TrackingService) GetDevicesAsJSON() ([]byte, error) {
 	results, err := service.repo.GetDevices(service.ua.ID)
 	if err != nil {

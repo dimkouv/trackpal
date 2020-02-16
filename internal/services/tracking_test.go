@@ -60,6 +60,15 @@ func TestTrackingService_SetUser(t *testing.T) {
 	assert.Equal(t, ua, server.ua)
 }
 
+func TestTrackingService_GetUser(t *testing.T) {
+	repo := repository.NewTrackingRepositoryMock()
+	server := NewTrackingService(repo)
+	assert.Empty(t, server.GetUser())
+	ua := models.UserAccount{ID: 123}
+	server.SetUser(ua)
+	assert.Equal(t, ua, server.GetUser())
+}
+
 func TestTrackingService_SaveDevice(t *testing.T) {
 	repo := repository.NewTrackingRepositoryMock()
 	server := NewTrackingService(repo)
