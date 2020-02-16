@@ -17,3 +17,7 @@ func TestUserAccount_Validate(t *testing.T) {
 	assert.Error(t, UserAccount{}.Validate())
 	assert.NoError(t, UserAccount{ID: 123}.Validate())
 }
+
+func TestNewUserAccount(t *testing.T) {
+	assert.Equal(t, &UserAccount{}, NewUserAccount())
+}

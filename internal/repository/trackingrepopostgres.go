@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/dimkouv/trackpal/internal/consts"
 	"github.com/dimkouv/trackpal/internal/models"
@@ -78,8 +79,10 @@ func (t TrackingRepositoryPostgres) SaveNewDevice(d models.Device) (*models.Devi
 		return nil, err
 	}
 
-	const sqlQuery = `insert into device(name, user_id) values ($1, $2) returning id`
-	err := t.db.QueryRow(sqlQuery, d.Name, d.UserID).Scan(&d.ID)
+	d.CreatedAt = time.Now().UTC().Truncate(time.Second)
+
+	const sqlQuery = `insert into device(name, user_id, created_at) values ($1, $2, $3) returning id`
+	err := t.db.QueryRow(sqlQuery, d.Name, d.UserID, d.CreatedAt).Scan(&d.ID)
 	if err != nil {
 		return nil, err
 	}

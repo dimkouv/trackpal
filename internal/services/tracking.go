@@ -24,6 +24,7 @@ const (
 	ErrVarNotFound
 	ErrMarshal
 	ErrPermissionDenied
+	ErrNotValid
 )
 
 type TrackingService struct {
@@ -71,7 +72,16 @@ func (service TrackingService) SaveDevice(rc io.Reader) ([]byte, error) {
 			WithField(consts.LogFieldBody, fmt.Sprintf("%s", requestData)).
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to parse request body")
+
 		return nil, terror.New(ErrBodyParse, err.Error())
+	}
+
+	if err := d.Validate(); err != nil {
+		logrus.
+			WithField(consts.LogFieldBody, fmt.Sprintf("%s", requestData)).
+			WithField(consts.LogFieldErr, err).
+			Errorf("the provided device is not valid")
+		return nil, terror.New(ErrNotValid, err.Error())
 	}
 
 	d.UserID = service.ua.ID

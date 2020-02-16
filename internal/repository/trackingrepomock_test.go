@@ -24,14 +24,6 @@ func TestNewTrackingRepositoryMock(t *testing.T) {
 func TestTrackingRepositoryMock_SaveNewDevice(t *testing.T) {
 	repo := NewTrackingRepositoryMock()
 
-	t.Run("trying to save an invalid device should raise an error", func(t *testing.T) {
-		_, err := repo.SaveNewDevice(models.Device{
-			ID:   0,
-			Name: "",
-		})
-		assert.Error(t, err)
-	})
-
 	t.Run("saving a valid device should be successful", func(t *testing.T) {
 		d, err := repo.SaveNewDevice(models.Device{
 			ID:   123, // the passed id is ignored

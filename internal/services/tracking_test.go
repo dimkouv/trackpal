@@ -3,8 +3,12 @@
 package services
 
 import (
+	"bytes"
 	"encoding/json"
 	"testing"
+	"time"
+
+	"github.com/dimkouv/trackpal/pkg/terror"
 
 	"github.com/dimkouv/trackpal/internal/models"
 
@@ -43,6 +47,70 @@ func TestTrackingService_GetDevicesAsJSON(t *testing.T) {
 
 		for i := range createdDevices {
 			assert.Equal(t, createdDevices[i].Name, devices[i].Name)
+		}
+	})
+}
+
+func TestTrackingService_SetUser(t *testing.T) {
+	repo := repository.NewTrackingRepositoryMock()
+	server := NewTrackingService(repo)
+	assert.Empty(t, server.ua)
+	ua := models.UserAccount{ID: 123}
+	server.SetUser(ua)
+	assert.Equal(t, ua, server.ua)
+}
+
+func TestTrackingService_SaveDevice(t *testing.T) {
+	repo := repository.NewTrackingRepositoryMock()
+	server := NewTrackingService(repo)
+
+	t.Run("should save and repond with the model succesfully", func(t *testing.T) {
+		deviceAsJSON, err := json.Marshal(models.Device{Name: "my cool device"})
+		assert.NoError(t, err)
+		deviceAsJSON, err = server.SaveDevice(bytes.NewBufferString(string(deviceAsJSON)))
+		assert.NoError(t, err)
+		device := models.Device{}
+		err = json.Unmarshal(deviceAsJSON, &device)
+		assert.NoError(t, err)
+
+		assert.Less(t, time.Now().UTC().Sub(device.CreatedAt).Seconds(), 2.0)
+		assert.Equal(t, "my cool device", device.Name)
+		assert.Greater(t, device.ID, int64(0))
+		assert.Empty(t, device.UserID)
+	})
+
+	t.Run("should respond with ErrBodyRead", func(t *testing.T) {
+		_, err := server.SaveDevice(IoReaderErrAlways{})
+		terr := err.(terror.Terror)
+		assert.Equal(t, ErrBodyRead, terr.Code())
+	})
+
+	t.Run("should respond with ErrBodyParse", func(t *testing.T) {
+		cases := []string{
+			"invalid json",
+			"",
+		}
+
+		for _, c := range cases {
+			_, err := server.SaveDevice(bytes.NewBufferString(c))
+			terr := err.(terror.Terror)
+			assert.Equal(t, ErrBodyParse, terr.Code())
+		}
+	})
+
+	t.Run("should respond with ErrNotValid", func(t *testing.T) {
+		cases := []string{
+			`{"a": "b"}`,
+			`{"name": ""}`,
+			`{"name": "a"}`,
+			`{"name": "aa"}`,
+			`{"name": "aaa"}`,
+		}
+
+		for _, c := range cases {
+			_, err := server.SaveDevice(bytes.NewBufferString(c))
+			terr := err.(terror.Terror)
+			assert.Equal(t, ErrNotValid, terr.Code())
 		}
 	})
 }

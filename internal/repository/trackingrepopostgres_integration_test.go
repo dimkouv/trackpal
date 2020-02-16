@@ -81,33 +81,35 @@ func TestTrackingRepositoryPostgres_SaveNewDevice(t *testing.T) {
 }
 
 func TestTrackingRepositoryPostgres_GetDevices(t *testing.T) {
-	devices := []models.Device{
-		{
-			Name:   fmt.Sprintf("%v", time.Now().UnixNano()),
+	devices := make([]models.Device, 0)
+	for i := 0; i < 5; i++ {
+		device, err := repo.SaveNewDevice(models.Device{
+			Name:   xid.New().String(),
 			UserID: ua.ID,
-		},
-		{
-			Name:   fmt.Sprintf("%v", time.Now().UnixNano()),
-			UserID: ua.ID,
-		},
-	}
-
-	for _, device := range devices {
-		_, err := repo.SaveNewDevice(device)
+		})
 		assert.NoError(t, err)
+		devices = append(devices, *device)
 	}
 
-	fetchedDevices, err := repo.GetDevices(ua.ID)
-	assert.NoError(t, err)
-	found := 0
-	for i := range devices {
-		for j := range fetchedDevices {
-			if fetchedDevices[j].Name == devices[i].Name {
-				found++
+	t.Run("should fetch all the devices of the user", func(t *testing.T) {
+		fetchedDevices, err := repo.GetDevices(ua.ID)
+		assert.NoError(t, err)
+		found := 0
+		for i := range devices {
+			for j := range fetchedDevices {
+				if fetchedDevices[j].Name == devices[i].Name {
+					found++
+				}
 			}
 		}
-	}
-	assert.Equal(t, len(devices), found)
+		assert.Equal(t, len(devices), found)
+	})
+
+	t.Run("should respond with an empty list if user does not exist", func(t *testing.T) {
+		fetchedDevices, err := repo.GetDevices(-1)
+		assert.NoError(t, err)
+		assert.Empty(t, fetchedDevices)
+	})
 }
 
 func TestTrackingRepositoryPostgres_SaveNewTrackInput(t *testing.T) {

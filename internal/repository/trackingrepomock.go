@@ -2,6 +2,7 @@ package repository
 
 import (
 	"sort"
+	"time"
 
 	"github.com/dimkouv/trackpal/internal/models"
 )
@@ -24,12 +25,9 @@ func (repo *TrackingRepositoryMock) GetDeviceByID(deviceID int64) (*models.Devic
 }
 
 func (repo *TrackingRepositoryMock) SaveNewDevice(d models.Device) (*models.Device, error) {
-	if err := d.Validate(); err != nil {
-		return nil, err
-	}
-
 	deviceID := int64(len(repo.devices) + 1)
 	d.ID = deviceID
+	d.CreatedAt = time.Now().UTC().Truncate(time.Second)
 	repo.devices = append(repo.devices, d)
 	repo.trackInputsDeviceIDX[deviceID] = make([]models.TrackInput, 0)
 	return &d, nil
