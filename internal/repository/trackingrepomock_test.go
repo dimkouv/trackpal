@@ -52,7 +52,7 @@ func TestTrackingRepositoryMock_GetDevices(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	fetchedDevices, err := repo.GetDevices()
+	fetchedDevices, err := repo.GetDevices(0)
 	assert.NoError(t, err)
 	for i := range fetchedDevices {
 		assert.Equal(t, devices[i].Name, fetchedDevices[i].Name)

@@ -8,10 +8,13 @@ type Argon2Conf struct {
 	KeyLength   uint32
 }
 
-var Argon2Params = Argon2Conf{
-	Memory:      32 * 1024,
-	Iterations:  4,
-	Parallelism: 2,
-	SaltLength:  16,
-	KeyLength:   32,
-}
+// nolint: gochecknoglobals
+var (
+	Argon2Params = Argon2Conf{
+		Memory:      32 * 1024,
+		Iterations:  4,
+		Parallelism: 2,
+		SaltLength:  16,
+		KeyLength:   32,
+	}
+)

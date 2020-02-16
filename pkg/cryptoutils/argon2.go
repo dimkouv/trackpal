@@ -51,7 +51,8 @@ func generateFromPassword(password string, p conf.Argon2Conf) (string, error) {
 	b64Hash := base64.RawStdEncoding.EncodeToString(hash)
 
 	// Return a string using the standard encoded hash representation.
-	encodedHash := fmt.Sprintf("$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s", argon2.Version, p.Memory, p.Iterations, p.Parallelism, b64Salt, b64Hash)
+	encodedHash := fmt.Sprintf("$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s",
+		argon2.Version, p.Memory, p.Iterations, p.Parallelism, b64Salt, b64Hash)
 	return encodedHash, nil
 }
 

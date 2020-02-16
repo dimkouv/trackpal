@@ -5,12 +5,27 @@ import (
 	"github.com/dimkouv/trackpal/internal/models"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
-	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 )
 
 type TrackingRepositoryPostgres struct {
 	db *sqlx.DB
+}
+
+func (t TrackingRepositoryPostgres) GetDeviceByID(deviceID int64) (*models.Device, error) {
+	var device models.Device
+
+	const sqlQuery = `select id, name, created_at from device where id=$1`
+	err := t.db.Get(&device, sqlQuery, deviceID)
+	if err != nil {
+		pqErr := err.(*pq.Error)
+		if pqErr.Code == consts.PQCodeForeignKeyViolation {
+			return nil, ErrDeviceDoesNotExist
+		}
+		return nil, err
+	}
+
+	return &device, nil
 }
 
 func (t TrackingRepositoryPostgres) SaveNewTrackInput(trackInput models.TrackInput) (*models.TrackInput, error) {
@@ -27,7 +42,7 @@ func (t TrackingRepositoryPostgres) SaveNewTrackInput(trackInput models.TrackInp
 		trackInput.DeviceID,
 	).Scan(&trackInput.ID); err != nil {
 		pqErr := err.(*pq.Error)
-		if pqErr.Code == "23503" {
+		if pqErr.Code == consts.PQCodeForeignKeyViolation {
 			return nil, ErrDeviceDoesNotExist
 		}
 		return nil, err
@@ -70,11 +85,11 @@ func (t TrackingRepositoryPostgres) SaveNewDevice(d models.Device) (*models.Devi
 	return &d, nil
 }
 
-func (t TrackingRepositoryPostgres) GetDevices() ([]models.Device, error) {
+func (t TrackingRepositoryPostgres) GetDevices(userID int64) ([]models.Device, error) {
 	trackInputs := make([]models.Device, 0)
 
-	const sqlQuery = `select id, name, created_at from device`
-	if err := t.db.Select(&trackInputs, sqlQuery); err != nil {
+	const sqlQuery = `select id, name, created_at from device where user_id=$1`
+	if err := t.db.Select(&trackInputs, sqlQuery, userID); err != nil {
 		return nil, err
 	}
 

@@ -13,6 +13,16 @@ type TrackingRepositoryMock struct {
 	trackInputsDeviceIDX map[int64][]models.TrackInput
 }
 
+func (repo *TrackingRepositoryMock) GetDeviceByID(deviceID int64) (*models.Device, error) {
+	for i := range repo.devices {
+		if repo.devices[i].ID == deviceID {
+			return &repo.devices[i], nil
+		}
+	}
+
+	return nil, ErrDeviceDoesNotExist
+}
+
 func (repo *TrackingRepositoryMock) SaveNewDevice(d models.Device) (*models.Device, error) {
 	if err := d.Validate(); err != nil {
 		return nil, err
@@ -25,8 +35,15 @@ func (repo *TrackingRepositoryMock) SaveNewDevice(d models.Device) (*models.Devi
 	return &d, nil
 }
 
-func (repo *TrackingRepositoryMock) GetDevices() ([]models.Device, error) {
-	return repo.devices, nil
+func (repo *TrackingRepositoryMock) GetDevices(userID int64) ([]models.Device, error) {
+	results := make([]models.Device, 0)
+	for i := range repo.devices {
+		if repo.devices[i].UserID == userID {
+			results = append(results, repo.devices[i])
+		}
+	}
+
+	return results, nil
 }
 
 func (repo *TrackingRepositoryMock) SaveNewTrackInput(trackInput models.TrackInput) (*models.TrackInput, error) {

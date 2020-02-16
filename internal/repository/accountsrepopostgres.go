@@ -19,7 +19,8 @@ type AccountsRepositoryPostgres struct {
 	db *sqlx.DB
 }
 
-func (repo AccountsRepositoryPostgres) SaveNewUser(ua models.UserAccount, password string) (*models.UserAccount, error) {
+func (repo AccountsRepositoryPostgres) SaveNewUser(
+	ua models.UserAccount, password string) (*models.UserAccount, error) {
 	if err := ua.Validate(); err != nil {
 		return nil, err
 	}

@@ -97,7 +97,7 @@ func TestTrackingRepositoryPostgres_GetDevices(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	fetchedDevices, err := repo.GetDevices()
+	fetchedDevices, err := repo.GetDevices(ua.ID)
 	assert.NoError(t, err)
 	found := 0
 	for i := range devices {

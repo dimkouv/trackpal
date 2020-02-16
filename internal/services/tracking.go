@@ -23,14 +23,16 @@ const (
 	ErrBodyParse
 	ErrVarNotFound
 	ErrMarshal
+	ErrPermissionDenied
 )
 
 type TrackingService struct {
+	ua   models.UserAccount
 	repo repository.TrackingRepository
 }
 
 func (service TrackingService) GetDevicesAsJSON() ([]byte, error) {
-	results, err := service.repo.GetDevices()
+	results, err := service.repo.GetDevices(service.ua.ID)
 	if err != nil {
 		logrus.
 			WithField(consts.LogFieldErr, err).
@@ -49,7 +51,7 @@ func (service TrackingService) GetDevicesAsJSON() ([]byte, error) {
 	return b, nil
 }
 
-func (service TrackingService) SaveDevice(rc io.ReadCloser) ([]byte, error) {
+func (service TrackingService) SaveDevice(rc io.Reader) ([]byte, error) {
 	requestData, err := ioutil.ReadAll(rc)
 	if err != nil {
 		logrus.
@@ -68,6 +70,7 @@ func (service TrackingService) SaveDevice(rc io.ReadCloser) ([]byte, error) {
 		return nil, terror.New(ErrBodyParse, err.Error())
 	}
 
+	d.UserID = service.ua.ID
 	device, err := service.repo.SaveNewDevice(d)
 	if err != nil {
 		logrus.
@@ -87,7 +90,7 @@ func (service TrackingService) SaveDevice(rc io.ReadCloser) ([]byte, error) {
 	return b, nil
 }
 
-func (service TrackingService) SaveTrackInput(vars map[string]string, rc io.ReadCloser) ([]byte, error) {
+func (service TrackingService) SaveTrackInput(vars map[string]string, rc io.Reader) ([]byte, error) {
 	requestData, err := ioutil.ReadAll(rc)
 	if err != nil {
 		logrus.
@@ -103,6 +106,22 @@ func (service TrackingService) SaveTrackInput(vars map[string]string, rc io.Read
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to parse deviceID")
 		return nil, terror.New(ErrVarNotFound, err.Error())
+	}
+
+	device, err := service.repo.GetDeviceByID(int64(deviceID))
+	if err != nil {
+		logrus.
+			WithField(consts.LogFieldErr, err).
+			Errorf("unable to get device by id")
+		return nil, terror.New(ErrPlain, err.Error())
+	}
+
+	if device.UserID != service.ua.ID {
+		logrus.
+			WithField("user_id", service.ua.ID).
+			WithField("device_owner", device.UserID).
+			Errorf("unauthorized to save track input")
+		return nil, terror.New(ErrPermissionDenied, "device owner is not the claimed one")
 	}
 
 	t := models.TrackInput{}
@@ -140,6 +159,22 @@ func (service TrackingService) GetAllTrackInputsOfDeviceAsJSON(vars map[string]s
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to parse deviceID")
 		return nil, terror.New(ErrVarNotFound, err.Error())
+	}
+
+	device, err := service.repo.GetDeviceByID(int64(deviceID))
+	if err != nil {
+		logrus.
+			WithField(consts.LogFieldErr, err).
+			Errorf("unable to get device by id")
+		return nil, terror.New(ErrPlain, err.Error())
+	}
+
+	if device.UserID != service.ua.ID {
+		logrus.
+			WithField("user_id", service.ua.ID).
+			WithField("device_owner", device.UserID).
+			Errorf("unauthorized to get track inputs of that device")
+		return nil, terror.New(ErrPermissionDenied, "device owner is not the claimed one")
 	}
 
 	results, err := service.repo.GetAllTrackInputsOfDevice(int64(deviceID))
