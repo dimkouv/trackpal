@@ -3,14 +3,15 @@ package models
 import (
 	"errors"
 	"fmt"
+	"time"
 )
 
 const minDeviceNameLength = 4
 
 type Device struct {
-	ID        int64  `json:"id" db:"id"`
-	Name      string `json:"name" db:"name"`
-	CreatedAt string `json:"created_at" db:"created_at"`
+	ID        int64     `json:"id" db:"id"`
+	Name      string    `json:"name" db:"name"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
 
 	UserID int64 `json:"-" db:"user_id"`
 }

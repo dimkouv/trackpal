@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"database/sql"
+
 	"github.com/dimkouv/trackpal/internal/consts"
 	"github.com/dimkouv/trackpal/internal/models"
 	"github.com/jmoiron/sqlx"
@@ -18,8 +20,8 @@ func (t TrackingRepositoryPostgres) GetDeviceByID(deviceID int64) (*models.Devic
 	const sqlQuery = `select id, name, created_at from device where id=$1`
 	err := t.db.Get(&device, sqlQuery, deviceID)
 	if err != nil {
-		pqErr := err.(*pq.Error)
-		if pqErr.Code == consts.PQCodeForeignKeyViolation {
+		pqErr, isPqErr := err.(*pq.Error)
+		if (isPqErr && pqErr.Code == consts.PQCodeForeignKeyViolation) || err == sql.ErrNoRows {
 			return nil, ErrDeviceDoesNotExist
 		}
 		return nil, err

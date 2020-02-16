@@ -201,3 +201,30 @@ func TestTrackingRepositoryPostgres_GetAllTrackInputsOfDevice(t *testing.T) {
 		assert.Equal(t, ErrDeviceDoesNotExist, err)
 	})
 }
+
+func TestTrackingRepositoryPostgres_GetDeviceByID(t *testing.T) {
+	devices := make([]models.Device, 0)
+
+	for i := 0; i < 5; i++ {
+		device, err := repo.SaveNewDevice(models.Device{
+			Name:   xid.New().String(),
+			UserID: ua.ID,
+		})
+		assert.NoError(t, err)
+		devices = append(devices, *device)
+	}
+
+	t.Run("it should respond with the device if it exists", func(t *testing.T) {
+		for i := range devices {
+			fetchedDevice, err := repo.GetDeviceByID(devices[i].ID)
+			assert.NoError(t, err)
+			assert.Equal(t, devices[i].ID, fetchedDevice.ID)
+			assert.Equal(t, devices[i].Name, fetchedDevice.Name)
+		}
+	})
+
+	t.Run("should respond with error if device does not exist", func(t *testing.T) {
+		_, err := repo.GetDeviceByID(-1234)
+		assert.Equal(t, ErrDeviceDoesNotExist, err)
+	})
+}

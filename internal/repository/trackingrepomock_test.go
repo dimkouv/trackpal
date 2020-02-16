@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rs/xid"
+
 	"github.com/dimkouv/trackpal/internal/models"
 
 	"github.com/stretchr/testify/assert"
@@ -43,17 +45,21 @@ func TestTrackingRepositoryMock_SaveNewDevice(t *testing.T) {
 func TestTrackingRepositoryMock_GetDevices(t *testing.T) {
 	repo := NewTrackingRepositoryMock()
 
-	devices := []models.Device{
-		{Name: "dev1"}, {Name: "dev2"}, {Name: "dev3"}, {Name: "dev4"},
-	}
+	devices := make([]models.Device, 0)
+	const userID = 12345
+	for i := 0; i < 5; i++ {
+		devices = append(devices, models.Device{
+			Name:   xid.New().String(),
+			UserID: userID,
+		})
 
-	for _, device := range devices {
-		_, err := repo.SaveNewDevice(device)
+		_, err := repo.SaveNewDevice(devices[i])
 		assert.NoError(t, err)
 	}
 
-	fetchedDevices, err := repo.GetDevices(0)
+	fetchedDevices, err := repo.GetDevices(userID)
 	assert.NoError(t, err)
+	assert.Len(t, fetchedDevices, len(devices))
 	for i := range fetchedDevices {
 		assert.Equal(t, devices[i].Name, fetchedDevices[i].Name)
 	}
@@ -147,6 +153,34 @@ func TestTrackingRepositoryMock_GetAllTrackInputsOfDevice(t *testing.T) {
 
 	t.Run("if the specified device does not exist an error should be returned", func(t *testing.T) {
 		_, err := repo.GetAllTrackInputsOfDevice(123)
+		assert.Equal(t, ErrDeviceDoesNotExist, err)
+	})
+}
+
+func TestTrackingRepositoryMock_GetDeviceByID(t *testing.T) {
+	repo := NewTrackingRepositoryMock()
+
+	devices := make([]models.Device, 0)
+	const userID = 12345
+	for i := 0; i < 5; i++ {
+		device, err := repo.SaveNewDevice(models.Device{
+			Name:   xid.New().String(),
+			UserID: userID,
+		})
+		assert.NoError(t, err)
+		devices = append(devices, *device)
+	}
+
+	t.Run("it should respond with the device if it exists", func(t *testing.T) {
+		for i := 0; i < 5; i++ {
+			fetchedDevice, err := repo.GetDeviceByID(devices[i].ID)
+			assert.NoError(t, err)
+			assert.Equal(t, devices[i], *fetchedDevice)
+		}
+	})
+
+	t.Run("should respond with error if device does not exist", func(t *testing.T) {
+		_, err := repo.GetDeviceByID(-1234)
 		assert.Equal(t, ErrDeviceDoesNotExist, err)
 	})
 }

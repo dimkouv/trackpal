@@ -44,6 +44,11 @@ func TestAccountsRepoPostgres_SaveNewUser(t *testing.T) {
 		_, err = repo.SaveNewUser(ua, password)
 		assert.Error(t, err)
 	})
+
+	t.Run("saving an invalid user should fail", func(t *testing.T) {
+		_, err = repo.SaveNewUser(models.UserAccount{}, password)
+		assert.Error(t, err)
+	})
 }
 
 func TestAccountsRepoPostgres_GetUserByEmailAndPassword(t *testing.T) {

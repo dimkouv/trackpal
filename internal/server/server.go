@@ -15,6 +15,7 @@ type Route struct {
 
 type TrackpalServer struct {
 	trackingService services.TrackingService
+	userService     services.UserAccountService
 	routes          []Route
 }
 
