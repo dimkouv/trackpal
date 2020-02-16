@@ -16,9 +16,9 @@ coverage: ## Creates a test coverage report
 	go test --tags="unit_test" -coverprofile=$coverage_file ./... && go tool cover -html=$coverage_file && unlink $coverage_file
 
 .PHONY: coverage_full
-coverage_file="/tmp/go-cover.$$.tmp"
+coverage_file=/tmp/go-cover-trackpal.tmp
 coverage_full: ## Creates a test coverage report (requires env: POSTGRES_DSN)
-	go test --tags="unit_test integration_test" -coverprofile=$coverage_file ./... && go tool cover -html=$coverage_file && unlink $coverage_file
+	go test --tags="unit_test integration_test" -coverprofile=${coverage_file} ./... && go tool cover -html=${coverage_file} && unlink ${coverage_file}
 
 .PHONY: build
 build: ## Compiles the server

@@ -37,7 +37,7 @@ func TestAccountsRepoPostgres_SaveNewUser(t *testing.T) {
 		populatedUA, err := repo.SaveNewUser(ua, password)
 		assert.NoError(t, err)
 		assert.Equal(t, populatedUA.IsActive, false)
-		assert.Greater(t, populatedUA.ID, 0)
+		assert.Greater(t, populatedUA.ID, int64(0))
 	})
 
 	t.Run("saving a user with an existing email should fail", func(t *testing.T) {
@@ -64,7 +64,7 @@ func TestAccountsRepoPostgres_GetUserByEmailAndPassword(t *testing.T) {
 		populatedUA, err := repo.GetUserByEmailAndPassword(ua.Email, password)
 		assert.NoError(t, err)
 		assert.Equal(t, populatedUA.IsActive, false)
-		assert.Greater(t, populatedUA.ID, 0)
+		assert.Greater(t, populatedUA.ID, int64(0))
 	})
 
 	t.Run("should fail if the password is not correct", func(t *testing.T) {

@@ -4,14 +4,49 @@ package repository
 
 import (
 	"fmt"
+	"os"
 	"testing"
 	"time"
+
+	"github.com/rs/xid"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/dimkouv/trackpal/internal/envlib"
 
 	"github.com/dimkouv/trackpal/internal/models"
 	"github.com/stretchr/testify/assert"
 )
+
+var (
+	ua   *models.UserAccount
+	repo *TrackingRepositoryPostgres
+)
+
+func TestMain(m *testing.M) {
+	postgresDSN := envlib.GetEnvOrPanic(envlib.EnvPostgresDSN)
+
+	postgresRepo, err := NewTrackingRepositoryPostgres(postgresDSN)
+	if err != nil {
+		logrus.Fatalf("unable to create repo: %v", err)
+	}
+	repo = postgresRepo
+
+	uaRepo, err := NewAccountsRepositoryPostgres(postgresDSN)
+	if err != nil {
+		logrus.Fatalf("unable to create repo: %v", err)
+	}
+
+	user, err := uaRepo.SaveNewUser(models.UserAccount{
+		Email: xid.New().String() + "@trackpal.com",
+	}, "my-password")
+	if err != nil {
+		logrus.Fatalf("unable to create user: %v", err)
+	}
+	ua = user
+
+	os.Exit(m.Run())
+}
 
 func TestNewTrackingRepositoryPostgres(t *testing.T) {
 	_, err := NewTrackingRepositoryPostgres("invalid")
@@ -23,37 +58,37 @@ func TestNewTrackingRepositoryPostgres(t *testing.T) {
 }
 
 func TestTrackingRepositoryPostgres_SaveNewDevice(t *testing.T) {
-	repo, err := NewTrackingRepositoryPostgres(envlib.GetEnvOrPanic(envlib.EnvPostgresDSN))
-	assert.NoError(t, err)
-
 	t.Run("trying to save an invalid device should raise an error", func(t *testing.T) {
 		_, err := repo.SaveNewDevice(models.Device{
-			ID:   0,
-			Name: "",
+			ID:     0,
+			Name:   "",
+			UserID: ua.ID,
 		})
 		assert.Error(t, err)
 	})
 
 	t.Run("saving a valid device should be successful", func(t *testing.T) {
 		d, err := repo.SaveNewDevice(models.Device{
-			ID:   -1, // the passed id is ignored
-			Name: "my-device",
+			ID:     -1, // the passed id is ignored
+			Name:   "my-device",
+			UserID: ua.ID,
 		})
-		assert.NoError(t, err)
+		if !assert.NoError(t, err) {
+			fmt.Println(">>>", err)
+		}
 		assert.Greater(t, d.ID, int64(0))
 	})
 }
 
 func TestTrackingRepositoryPostgres_GetDevices(t *testing.T) {
-	repo, err := NewTrackingRepositoryPostgres(envlib.GetEnvOrPanic(envlib.EnvPostgresDSN))
-	assert.NoError(t, err)
-
 	devices := []models.Device{
 		{
-			Name: fmt.Sprintf("%v", time.Now().UnixNano()),
+			Name:   fmt.Sprintf("%v", time.Now().UnixNano()),
+			UserID: ua.ID,
 		},
 		{
-			Name: fmt.Sprintf("%v", time.Now().UnixNano()),
+			Name:   fmt.Sprintf("%v", time.Now().UnixNano()),
+			UserID: ua.ID,
 		},
 	}
 
@@ -76,15 +111,14 @@ func TestTrackingRepositoryPostgres_GetDevices(t *testing.T) {
 }
 
 func TestTrackingRepositoryPostgres_SaveNewTrackInput(t *testing.T) {
-	repo, err := NewTrackingRepositoryPostgres(envlib.GetEnvOrPanic(envlib.EnvPostgresDSN))
-	assert.NoError(t, err)
-
 	devices := []models.Device{
 		{Name: "dev1"}, {Name: "dev2"}, {Name: "dev3"}, {Name: "dev4"},
 	}
-	for _, device := range devices {
-		_, err := repo.SaveNewDevice(device)
+	for i, device := range devices {
+		device.UserID = ua.ID
+		dev, err := repo.SaveNewDevice(device)
 		assert.NoError(t, err)
+		devices[i] = *dev
 	}
 
 	t.Run("saving a track input for a non existing device should respond with error", func(t *testing.T) {
@@ -94,7 +128,7 @@ func TestTrackingRepositoryPostgres_SaveNewTrackInput(t *testing.T) {
 				Lng: 32.123,
 			},
 			RecordedAt: time.Now(),
-			DeviceID:   123,
+			DeviceID:   -1,
 		})
 		assert.Equal(t, ErrDeviceDoesNotExist, err)
 	})
@@ -103,7 +137,7 @@ func TestTrackingRepositoryPostgres_SaveNewTrackInput(t *testing.T) {
 		_, err := repo.SaveNewTrackInput(models.TrackInput{
 			Location:   models.Location{},
 			RecordedAt: time.Now(),
-			DeviceID:   2,
+			DeviceID:   devices[0].ID,
 		})
 		assert.Error(t, err)
 		assert.NotEqual(t, ErrDeviceDoesNotExist, err)
@@ -116,19 +150,22 @@ func TestTrackingRepositoryPostgres_SaveNewTrackInput(t *testing.T) {
 				Lng: 21.123,
 			},
 			RecordedAt: time.Now(),
-			DeviceID:   2,
+			DeviceID:   devices[0].ID,
 		})
 		assert.NoError(t, err)
 	})
 }
 
 func TestTrackingRepositoryPostgres_GetAllTrackInputsOfDevice(t *testing.T) {
-	repo, err := NewTrackingRepositoryPostgres(envlib.GetEnvOrPanic(envlib.EnvPostgresDSN))
+	dev1, err := repo.SaveNewDevice(models.Device{
+		Name:   fmt.Sprintf("%v", time.Now().Unix()),
+		UserID: ua.ID,
+	})
 	assert.NoError(t, err)
-
-	dev1, err := repo.SaveNewDevice(models.Device{Name: fmt.Sprintf("%v", time.Now().Unix())})
-	assert.NoError(t, err)
-	dev2, err := repo.SaveNewDevice(models.Device{Name: fmt.Sprintf("%v", time.Now().Unix())})
+	dev2, err := repo.SaveNewDevice(models.Device{
+		Name:   fmt.Sprintf("%v", time.Now().Unix()),
+		UserID: ua.ID,
+	})
 	assert.NoError(t, err)
 
 	trackInputs := make([]models.TrackInput, 0)

@@ -11,6 +11,8 @@ type Device struct {
 	ID        int64  `json:"id" db:"id"`
 	Name      string `json:"name" db:"name"`
 	CreatedAt string `json:"created_at" db:"created_at"`
+
+	UserID int64 `json:"-" db:"user_id"`
 }
 
 func (d Device) IsEmpty() bool {
