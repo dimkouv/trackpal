@@ -3,6 +3,7 @@ package repository
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/dimkouv/trackpal/internal/consts"
@@ -17,6 +18,63 @@ const repoName = "accounts_repository_postgres"
 
 type AccountsRepositoryPostgres struct {
 	db *sqlx.DB
+}
+
+func (repo AccountsRepositoryPostgres) UpdateUser(userID int64, input *UpdateUserInput) (bool, error) {
+	if input == nil {
+		return false, nil
+	}
+
+	queryUpdateFields := make([]string, 0)
+	args := make([]interface{}, 0)
+	switch {
+	case input.ActivationToken != nil:
+		args = append(args, *input.ActivationToken)
+		queryUpdateFields = append(queryUpdateFields, fmt.Sprintf("activation_token=$%d", len(args)))
+		fallthrough
+	case input.IsActive != nil:
+		args = append(args, *input.IsActive)
+		queryUpdateFields = append(queryUpdateFields, fmt.Sprintf("is_active=$%d", len(args)))
+		fallthrough
+	case input.LastName != nil:
+		args = append(args, *input.LastName)
+		queryUpdateFields = append(queryUpdateFields, fmt.Sprintf("last_name=$%d", len(args)))
+		fallthrough
+	case input.FirstName != nil:
+		args = append(args, *input.FirstName)
+		queryUpdateFields = append(queryUpdateFields, fmt.Sprintf("first_name=$%d", len(args)))
+		fallthrough
+	case input.Email != nil:
+		args = append(args, *input.Email)
+		queryUpdateFields = append(queryUpdateFields, fmt.Sprintf("email=$%d", len(args)))
+		fallthrough
+	case input.Password != nil:
+		passhash, err := cryptoutils.Argon2Hash(*input.Password)
+		if err != nil {
+			return false, fmt.Errorf("unable to generate passhash: %v", err)
+		}
+		args = append(args, passhash)
+		queryUpdateFields = append(queryUpdateFields, fmt.Sprintf("passhash=$%d", len(args)))
+	}
+
+	args = append(args, userID)
+	q := fmt.Sprintf("update user_account set %s where id=$%d",
+		strings.Join(queryUpdateFields, ", "), len(args))
+
+	res, err := repo.db.Exec(q, args...)
+	if err != nil {
+		return false, err
+	}
+
+	n, err := res.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	if n == 0 {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 func (repo AccountsRepositoryPostgres) SaveNewUser(

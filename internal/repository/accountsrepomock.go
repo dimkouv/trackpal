@@ -15,6 +15,46 @@ type AccountsRepoMock struct {
 	userAccount []models.UserAccount
 }
 
+func (repo *AccountsRepoMock) UpdateUser(userID int64, input *UpdateUserInput) (bool, error) {
+	if input == nil {
+		return false, nil
+	}
+
+	for i := range repo.userAccount {
+		if repo.userAccount[i].ID != userID {
+			continue
+		}
+
+		switch {
+		case input.ActivationToken != nil:
+			repo.userAccount[i].ActivationToken = *input.ActivationToken
+			fallthrough
+		case input.IsActive != nil:
+			repo.userAccount[i].IsActive = *input.IsActive
+			fallthrough
+		case input.LastName != nil:
+			repo.userAccount[i].LastName = *input.LastName
+			fallthrough
+		case input.FirstName != nil:
+			repo.userAccount[i].FirstName = *input.FirstName
+			fallthrough
+		case input.Email != nil:
+			repo.userAccount[i].Email = *input.Email
+			fallthrough
+		case input.Password != nil:
+			passhash, err := cryptoutils.Argon2Hash(*input.Password)
+			if err != nil {
+				return false, fmt.Errorf("unable to generate passhash: %v", err)
+			}
+			repo.userAccount[i].Passhash = passhash
+		}
+
+		return true, nil
+	}
+
+	return false, errors.New("user account not found")
+}
+
 func (repo *AccountsRepoMock) SaveNewUser(ua models.UserAccount, password string) (*models.UserAccount, error) {
 	passhash, err := cryptoutils.Argon2Hash(password)
 	if err != nil {

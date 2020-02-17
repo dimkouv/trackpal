@@ -2,6 +2,9 @@ package models
 
 import (
 	"errors"
+	"time"
+
+	"github.com/dgrijalva/jwt-go"
 )
 
 type UserAccount struct {
@@ -28,6 +31,22 @@ func (ua UserAccount) Validate() error {
 
 func (ua *UserAccount) FromJWT(jwt string) (*UserAccount, error) {
 	return ua, errors.New("unimplemented")
+}
+
+func (ua *UserAccount) GetJWT(jwtSignBytes []byte) (string, error) {
+	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"email":      ua.Email,
+		"first_name": ua.FirstName,
+		"last_name":  ua.LastName,
+		"createdAt":  time.Now(),
+	})
+
+	tokStr, err := tok.SignedString(jwtSignBytes)
+	if err != nil {
+		return "", err
+	}
+
+	return tokStr, nil
 }
 
 func NewUserAccount() *UserAccount {

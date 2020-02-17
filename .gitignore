@@ -9,3 +9,4 @@ vendor/
 
 # Built artifacts
 target/
+output/

@@ -10,4 +10,18 @@ type UserAccountRepository interface {
 
 	// GetUserByEmailAndPassword can be used for fetching a user that matches the target email and password.
 	GetUserByEmailAndPassword(email, password string) (*models.UserAccount, error)
+
+	// UpdateUser can be used for updating some information of the user. Responds
+	// with whether or not a user got updated and an error
+	UpdateUser(userID int64, input *UpdateUserInput) (bool, error)
+}
+
+// UpdateUserInput can be used for updating user information
+type UpdateUserInput struct {
+	Email           *string
+	Password        *string
+	FirstName       *string
+	LastName        *string
+	IsActive        *bool
+	ActivationToken *string
 }
