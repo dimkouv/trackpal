@@ -11,6 +11,18 @@ import (
 func (ts TrackpalServer) RegisterRoutes() *mux.Router {
 	ts.routes = []Route{
 		{
+			Name:        "RegisterAccount",
+			Method:      "POST",
+			Pattern:     "/auth/register",
+			HandlerFunc: ts.authRegister,
+		},
+		{
+			Name:        "RegisterAccount",
+			Method:      "POST",
+			Pattern:     "/auth/login",
+			HandlerFunc: ts.authLogin,
+		},
+		{
 			Name:        "GetDevices",
 			Method:      "GET",
 			Pattern:     "/devices",

@@ -17,4 +17,6 @@ var (
 		SaltLength:  16,
 		KeyLength:   32,
 	}
+
+	JWTSignBytes = "you-should-change-this-to-something-secure"
 )

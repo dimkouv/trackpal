@@ -79,10 +79,6 @@ func (repo AccountsRepositoryPostgres) UpdateUser(userID int64, input *UpdateUse
 
 func (repo AccountsRepositoryPostgres) SaveNewUser(
 	ua models.UserAccount, password string) (*models.UserAccount, error) {
-	if err := ua.Validate(); err != nil {
-		return nil, err
-	}
-
 	passhash, err := cryptoutils.Argon2Hash(password)
 	if err != nil {
 		return nil, fmt.Errorf("unable to generate passhash: %v", err)
