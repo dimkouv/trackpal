@@ -2,10 +2,22 @@
 
 ## Authorization
 
-- **TBD** Get a jwt token that can be used for authenticated requests
+- Get a jwt token that can be used for authenticated requests
 ```bash
-http POST <url>/auth/login <<< \
-{"username": "admin", "password": "1234"}
+http POST <url> <<< \
+'{"email": "admin", "password": "1234"}'
+```
+
+```
+200
+---
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkX2F0IjoiMjAyMC0wMi0xOFQx...
+```
+
+```
+400
+---
+{"msg": "string"}
 ```
 
 - **TBD** Refresh your jwt token (get a new one)
@@ -13,17 +25,27 @@ http POST <url>/auth/login <<< \
 http POST <url>/auth/refresh "Authorization: Bearer <jwt>"
 ```
 
-- **TBD** Register a new user account. Sends an activation token to the provided
+- Register a new user account. Sends an activation token to the provided
 email address. If the account is not activated withing 24hours it gets deleted.
 ```bash
-http POST <url>/auth/register <<< \
-{ \
-    "username": "admin", \
-    "password": "1234", \
-    "email": "me@mail.com", \
-    "first_name": "Ken", \
-    "last_name": "Thompson" \
-} 
+http POST 127.0.0.1:8080/auth/register <<< \
+'{
+    "password": "1234",
+    "email": "me@mail.com", 
+    "first_name": "Ken", 
+    "last_name": "Thompson"
+}'
+```
+
+```
+201
+---
+```
+
+```
+400
+---
+{"msg": "string"}
 ```
 
 ## Devices
