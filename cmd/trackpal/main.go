@@ -25,7 +25,7 @@ func main() {
 		panic(err)
 	}
 
-	trackpalServer := server.NewTrackpalServer(*trackingService, *uaService)
+	trackpalServer := server.NewTrackpalServer(trackingService, uaService)
 	routes := trackpalServer.RegisterRoutes()
 	trackpalServer.ListenAndServe(serverAddr, routes)
 }

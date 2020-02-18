@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -28,20 +29,13 @@ const (
 )
 
 type TrackingService struct {
-	ua   models.UserAccount
 	repo repository.TrackingRepository
 }
 
-func (service *TrackingService) SetUser(ua models.UserAccount) {
-	service.ua = ua
-}
+func (service TrackingService) GetDevicesAsJSON(ctx context.Context) ([]byte, error) {
+	ua := ctx.Value("user").(models.UserAccount)
 
-func (service *TrackingService) GetUser() models.UserAccount {
-	return service.ua
-}
-
-func (service TrackingService) GetDevicesAsJSON() ([]byte, error) {
-	results, err := service.repo.GetDevices(service.ua.ID)
+	results, err := service.repo.GetDevices(ua.ID)
 	if err != nil {
 		logrus.
 			WithField(consts.LogFieldErr, err).
@@ -60,7 +54,7 @@ func (service TrackingService) GetDevicesAsJSON() ([]byte, error) {
 	return b, nil
 }
 
-func (service TrackingService) SaveDevice(rc io.Reader) ([]byte, error) {
+func (service TrackingService) SaveDevice(ctx context.Context, rc io.Reader) ([]byte, error) {
 	requestData, err := ioutil.ReadAll(rc)
 	if err != nil {
 		logrus.
@@ -80,7 +74,8 @@ func (service TrackingService) SaveDevice(rc io.Reader) ([]byte, error) {
 		return nil, terror.New(ErrBodyParse, err.Error())
 	}
 
-	if err := d.Validate(); err != nil {
+	err = d.Validate()
+	if err != nil {
 		logrus.
 			WithField(consts.LogFieldBody, fmt.Sprintf("%s", requestData)).
 			WithField(consts.LogFieldErr, err).
@@ -88,7 +83,8 @@ func (service TrackingService) SaveDevice(rc io.Reader) ([]byte, error) {
 		return nil, terror.New(ErrNotValid, err.Error())
 	}
 
-	d.UserID = service.ua.ID
+	ua := ctx.Value("user").(models.UserAccount)
+	d.UserID = ua.ID
 	device, err := service.repo.SaveNewDevice(d)
 	if err != nil {
 		logrus.
@@ -108,7 +104,8 @@ func (service TrackingService) SaveDevice(rc io.Reader) ([]byte, error) {
 	return b, nil
 }
 
-func (service TrackingService) SaveTrackInput(vars map[string]string, rc io.Reader) ([]byte, error) {
+func (service TrackingService) SaveTrackInput(
+	ctx context.Context, vars map[string]string, rc io.Reader) ([]byte, error) {
 	requestData, err := ioutil.ReadAll(rc)
 	if err != nil {
 		logrus.
@@ -134,9 +131,10 @@ func (service TrackingService) SaveTrackInput(vars map[string]string, rc io.Read
 		return nil, terror.New(ErrPlain, err.Error())
 	}
 
-	if device.UserID != service.ua.ID {
+	ua := ctx.Value("user").(models.UserAccount)
+	if device.UserID != ua.ID {
 		logrus.
-			WithField("user_id", service.ua.ID).
+			WithField("user_id", ua.ID).
 			WithField("device_owner", device.UserID).
 			Errorf("unauthorized to save track input")
 		return nil, terror.New(ErrPermissionDenied, "device owner is not the claimed one")
@@ -169,7 +167,8 @@ func (service TrackingService) SaveTrackInput(vars map[string]string, rc io.Read
 	return b, nil
 }
 
-func (service TrackingService) GetAllTrackInputsOfDeviceAsJSON(vars map[string]string) ([]byte, error) {
+func (service TrackingService) GetAllTrackInputsOfDeviceAsJSON(
+	ctx context.Context, vars map[string]string) ([]byte, error) {
 	deviceID, err := strconv.Atoi(vars["deviceID"])
 	if err != nil {
 		logrus.
@@ -187,9 +186,10 @@ func (service TrackingService) GetAllTrackInputsOfDeviceAsJSON(vars map[string]s
 		return nil, terror.New(ErrPlain, err.Error())
 	}
 
-	if device.UserID != service.ua.ID {
+	ua := ctx.Value("user").(models.UserAccount)
+	if device.UserID != ua.ID {
 		logrus.
-			WithField("user_id", service.ua.ID).
+			WithField("user_id", ua.ID).
 			WithField("device_owner", device.UserID).
 			Errorf("unauthorized to get track inputs of that device")
 		return nil, terror.New(ErrPermissionDenied, "device owner is not the claimed one")
@@ -215,8 +215,8 @@ func (service TrackingService) GetAllTrackInputsOfDeviceAsJSON(vars map[string]s
 }
 
 // NewTrackingService receives a repository and returns a tracking service
-func NewTrackingService(repo repository.TrackingRepository) TrackingService {
-	return TrackingService{repo: repo}
+func NewTrackingService(repo repository.TrackingRepository) *TrackingService {
+	return &TrackingService{repo: repo}
 }
 
 // NewTrackingServicePostgres returns a tracking service with a postgres repository

@@ -9,7 +9,7 @@ import (
 )
 
 func (ts TrackpalServer) getDevices(w http.ResponseWriter, req *http.Request) {
-	b, err := ts.trackingService.GetDevicesAsJSON()
+	b, err := ts.trackingService.GetDevicesAsJSON(req.Context())
 
 	switch err {
 	case nil:
@@ -20,7 +20,7 @@ func (ts TrackpalServer) getDevices(w http.ResponseWriter, req *http.Request) {
 }
 
 func (ts TrackpalServer) createDevice(w http.ResponseWriter, req *http.Request) {
-	b, err := ts.trackingService.SaveDevice(req.Body)
+	b, err := ts.trackingService.SaveDevice(req.Context(), req.Body)
 
 	switch err {
 	case nil:
@@ -32,7 +32,7 @@ func (ts TrackpalServer) createDevice(w http.ResponseWriter, req *http.Request) 
 
 func (ts TrackpalServer) getTrackRecordsOfDevice(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	b, err := ts.trackingService.GetAllTrackInputsOfDeviceAsJSON(vars)
+	b, err := ts.trackingService.GetAllTrackInputsOfDeviceAsJSON(req.Context(), vars)
 
 	switch err {
 	case nil:
@@ -44,7 +44,7 @@ func (ts TrackpalServer) getTrackRecordsOfDevice(w http.ResponseWriter, req *htt
 
 func (ts TrackpalServer) addTrackRecordOfDevice(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	b, err := ts.trackingService.SaveTrackInput(vars, req.Body)
+	b, err := ts.trackingService.SaveTrackInput(req.Context(), vars, req.Body)
 
 	switch err {
 	case nil:
@@ -55,7 +55,7 @@ func (ts TrackpalServer) addTrackRecordOfDevice(w http.ResponseWriter, req *http
 }
 
 func (ts TrackpalServer) authRegister(w http.ResponseWriter, req *http.Request) {
-	err := ts.userService.CreateUserAccount(req.Body)
+	err := ts.userService.CreateUserAccount(req.Context(), req.Body)
 
 	switch err {
 	case nil:
@@ -66,7 +66,18 @@ func (ts TrackpalServer) authRegister(w http.ResponseWriter, req *http.Request) 
 }
 
 func (ts TrackpalServer) authLogin(w http.ResponseWriter, req *http.Request) {
-	b, err := ts.userService.GetJWTFromEmailAndPassword(req.Body)
+	b, err := ts.userService.GetJWTFromEmailAndPassword(req.Context(), req.Body)
+
+	switch err {
+	case nil:
+		response.HTTP(w).Data(b).Status(http.StatusOK).JSON()
+	default:
+		response.HTTP(w).Error(err).Status(http.StatusBadRequest).JSON()
+	}
+}
+
+func (ts TrackpalServer) authRefresh(w http.ResponseWriter, req *http.Request) {
+	b, err := ts.userService.RefreshJWT(req.Context())
 
 	switch err {
 	case nil:

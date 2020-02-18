@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -18,7 +19,7 @@ type UserAccountService struct {
 	repo repository.UserAccountRepository
 }
 
-func (s *UserAccountService) CreateUserAccount(rc io.Reader) error {
+func (s *UserAccountService) CreateUserAccount(ctx context.Context, rc io.Reader) error {
 	type createUserAccountInput struct {
 		Email     string `json:"email"`
 		Password  string `json:"password"`
@@ -35,8 +36,7 @@ func (s *UserAccountService) CreateUserAccount(rc io.Reader) error {
 	}
 
 	uaReq := createUserAccountInput{}
-	err = json.Unmarshal(requestData, &uaReq)
-	if err != nil {
+	if err = json.Unmarshal(requestData, &uaReq); err != nil {
 		logrus.
 			WithField(consts.LogFieldBody, fmt.Sprintf("%s", requestData)).
 			WithField(consts.LogFieldErr, err).
@@ -64,7 +64,7 @@ func (s *UserAccountService) CreateUserAccount(rc io.Reader) error {
 	return nil
 }
 
-func (s *UserAccountService) GetJWTFromEmailAndPassword(rc io.Reader) ([]byte, error) {
+func (s *UserAccountService) GetJWTFromEmailAndPassword(ctx context.Context, rc io.Reader) ([]byte, error) {
 	type emailPasswordInput struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
@@ -111,9 +111,24 @@ func (s *UserAccountService) GetJWTFromEmailAndPassword(rc io.Reader) ([]byte, e
 	return []byte(tokenString), nil
 }
 
+func (s *UserAccountService) RefreshJWT(ctx context.Context) ([]byte, error) {
+	ua := ctx.Value("user").(models.UserAccount)
+
+	tokenString, err := ua.GetJWT()
+	if err != nil {
+		logrus.
+			WithField(consts.LogFieldErr, err).
+			Errorf("unable to get jwt")
+
+		return nil, terror.New(ErrBodyParse, err.Error())
+	}
+
+	return []byte(tokenString), nil
+}
+
 // NewUserAccountService receives a repository and returns a user account service
-func NewUserAccountService(repo repository.UserAccountRepository) UserAccountService {
-	return UserAccountService{repo: repo}
+func NewUserAccountService(repo repository.UserAccountRepository) *UserAccountService {
+	return &UserAccountService{repo: repo}
 }
 
 // NewUserAccountServicePostgres returns a user account service with a postgres repository

@@ -23,7 +23,7 @@ func (at activationToken) parse(s string) (activationToken, error) {
 	}
 
 	pin := parts[0]
-	if len(pin) == 0 {
+	if pin == "" {
 		return at, errors.New("invalid pin length")
 	}
 

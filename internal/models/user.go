@@ -58,19 +58,20 @@ func (ua *UserAccount) FromJWT(tokenString string) (*UserAccount, error) {
 			return nil, errors.New("token has expired")
 		}
 
-		return &UserAccount{
-			Email:     claims["email"].(string),
-			FirstName: claims["first_name"].(string),
-			LastName:  claims["last_name"].(string),
-		}, nil
+		ua.Email = claims["email"].(string)
+		ua.FirstName = claims["first_name"].(string)
+		ua.LastName = claims["last_name"].(string)
+		ua.ID = int64(claims["id"].(float64))
+		logrus.Debugf("user from claims loaded: %#v", ua)
+		return ua, nil
 	}
 
 	return nil, errors.New("invalid token")
-
 }
 
 func (ua *UserAccount) GetJWT() (string, error) {
 	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"id":         ua.ID,
 		"email":      ua.Email,
 		"first_name": ua.FirstName,
 		"last_name":  ua.LastName,

@@ -27,28 +27,33 @@ func (repo AccountsRepositoryPostgres) UpdateUser(userID int64, input *UpdateUse
 
 	queryUpdateFields := make([]string, 0)
 	args := make([]interface{}, 0)
-	switch {
-	case input.ActivationToken != nil:
+
+	if input.ActivationToken != nil {
 		args = append(args, *input.ActivationToken)
 		queryUpdateFields = append(queryUpdateFields, fmt.Sprintf("activation_token=$%d", len(args)))
-		fallthrough
-	case input.IsActive != nil:
+	}
+
+	if input.IsActive != nil {
 		args = append(args, *input.IsActive)
 		queryUpdateFields = append(queryUpdateFields, fmt.Sprintf("is_active=$%d", len(args)))
-		fallthrough
-	case input.LastName != nil:
+	}
+
+	if input.LastName != nil {
 		args = append(args, *input.LastName)
 		queryUpdateFields = append(queryUpdateFields, fmt.Sprintf("last_name=$%d", len(args)))
-		fallthrough
-	case input.FirstName != nil:
+	}
+
+	if input.FirstName != nil {
 		args = append(args, *input.FirstName)
 		queryUpdateFields = append(queryUpdateFields, fmt.Sprintf("first_name=$%d", len(args)))
-		fallthrough
-	case input.Email != nil:
+	}
+
+	if input.Email != nil {
 		args = append(args, *input.Email)
 		queryUpdateFields = append(queryUpdateFields, fmt.Sprintf("email=$%d", len(args)))
-		fallthrough
-	case input.Password != nil:
+	}
+
+	if input.Password != nil {
 		passhash, err := cryptoutils.Argon2Hash(*input.Password)
 		if err != nil {
 			return false, fmt.Errorf("unable to generate passhash: %v", err)

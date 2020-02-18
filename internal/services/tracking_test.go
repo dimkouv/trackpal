@@ -4,6 +4,7 @@ package services
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"testing"
 	"time"
@@ -23,7 +24,7 @@ func TestTrackingService_GetDevicesAsJSON(t *testing.T) {
 	devices := make([]models.Device, 0)
 
 	t.Run("if no devices exist a null response is received", func(t *testing.T) {
-		b, err := server.GetDevicesAsJSON()
+		b, err := server.GetDevicesAsJSON(context.WithValue(context.Background(), "user", models.UserAccount{}))
 		assert.NoError(t, err)
 		err = json.Unmarshal(b, &devices)
 		assert.NoError(t, err)
@@ -39,7 +40,7 @@ func TestTrackingService_GetDevicesAsJSON(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		b, err := server.GetDevicesAsJSON()
+		b, err := server.GetDevicesAsJSON(context.WithValue(context.Background(), "user", models.UserAccount{}))
 		assert.NoError(t, err)
 
 		err = json.Unmarshal(b, &devices)
@@ -51,24 +52,6 @@ func TestTrackingService_GetDevicesAsJSON(t *testing.T) {
 	})
 }
 
-func TestTrackingService_SetUser(t *testing.T) {
-	repo := repository.NewTrackingRepositoryMock()
-	server := NewTrackingService(repo)
-	assert.Empty(t, server.ua)
-	ua := models.UserAccount{ID: 123}
-	server.SetUser(ua)
-	assert.Equal(t, ua, server.ua)
-}
-
-func TestTrackingService_GetUser(t *testing.T) {
-	repo := repository.NewTrackingRepositoryMock()
-	server := NewTrackingService(repo)
-	assert.Empty(t, server.GetUser())
-	ua := models.UserAccount{ID: 123}
-	server.SetUser(ua)
-	assert.Equal(t, ua, server.GetUser())
-}
-
 func TestTrackingService_SaveDevice(t *testing.T) {
 	repo := repository.NewTrackingRepositoryMock()
 	server := NewTrackingService(repo)
@@ -76,7 +59,7 @@ func TestTrackingService_SaveDevice(t *testing.T) {
 	t.Run("should save and repond with the model succesfully", func(t *testing.T) {
 		deviceAsJSON, err := json.Marshal(models.Device{Name: "my cool device"})
 		assert.NoError(t, err)
-		deviceAsJSON, err = server.SaveDevice(bytes.NewBufferString(string(deviceAsJSON)))
+		deviceAsJSON, err = server.SaveDevice(context.WithValue(context.Background(), "user", models.UserAccount{}), bytes.NewBufferString(string(deviceAsJSON)))
 		assert.NoError(t, err)
 		device := models.Device{}
 		err = json.Unmarshal(deviceAsJSON, &device)
@@ -89,7 +72,7 @@ func TestTrackingService_SaveDevice(t *testing.T) {
 	})
 
 	t.Run("should respond with ErrBodyRead", func(t *testing.T) {
-		_, err := server.SaveDevice(IoReaderErrAlways{})
+		_, err := server.SaveDevice(context.Background(), IoReaderErrAlways{})
 		terr := err.(terror.Terror)
 		assert.Equal(t, ErrBodyRead, terr.Code())
 	})
@@ -101,7 +84,7 @@ func TestTrackingService_SaveDevice(t *testing.T) {
 		}
 
 		for _, c := range cases {
-			_, err := server.SaveDevice(bytes.NewBufferString(c))
+			_, err := server.SaveDevice(context.Background(), bytes.NewBufferString(c))
 			terr := err.(terror.Terror)
 			assert.Equal(t, ErrBodyParse, terr.Code())
 		}
@@ -117,7 +100,7 @@ func TestTrackingService_SaveDevice(t *testing.T) {
 		}
 
 		for _, c := range cases {
-			_, err := server.SaveDevice(bytes.NewBufferString(c))
+			_, err := server.SaveDevice(context.Background(), bytes.NewBufferString(c))
 			terr := err.(terror.Terror)
 			assert.Equal(t, ErrNotValid, terr.Code())
 		}
