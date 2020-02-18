@@ -8,7 +8,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/dimkouv/trackpal/internal/conf"
 	"github.com/dimkouv/trackpal/internal/consts"
 	"github.com/dimkouv/trackpal/internal/models"
 	"github.com/dimkouv/trackpal/internal/repository"
@@ -100,7 +99,7 @@ func (s *UserAccountService) GetJWTFromEmailAndPassword(rc io.Reader) ([]byte, e
 		return nil, terror.New(ErrBodyParse, err.Error())
 	}
 
-	jwt, err := ua.GetJWT([]byte(conf.JWTSignBytes))
+	tokenString, err := ua.GetJWT()
 	if err != nil {
 		logrus.
 			WithField(consts.LogFieldErr, err).
@@ -109,7 +108,7 @@ func (s *UserAccountService) GetJWTFromEmailAndPassword(rc io.Reader) ([]byte, e
 		return nil, terror.New(ErrBodyParse, err.Error())
 	}
 
-	return []byte(jwt), nil
+	return []byte(tokenString), nil
 }
 
 // NewUserAccountService receives a repository and returns a user account service

@@ -18,5 +18,5 @@ var (
 		KeyLength:   32,
 	}
 
-	JWTSignBytes = "you-should-change-this-to-something-secure"
+	JWTSignBytes = []byte("you-should-change-this-to-something-secure")
 )
