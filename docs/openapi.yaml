@@ -1,0 +1,84 @@
+openapi: '3.0.2'
+info:
+  description: >-
+    This is the API documentation for Trackpal. You can find the source code of
+    this RESTful API and/or open a PR
+    [here](https://github.com/dimkouv/trackpal).
+  version: 1.0.0
+  title: Trackpal
+  contact:
+    email: dimkouv@protonmail.com
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+
+servers:
+  - url: https://api.trackpal.xyz/v1
+
+tags:
+  - name: Account
+    description: Everything about your user account
+
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Account
+      summary: Register a new user account
+      description: >-
+        Upon success, you will receive a confirmation email. The link will be
+        valid for a limited number of minutes.
+      operationId: registerAccount
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterAccountRequest'
+      responses:
+        '201':
+          description: Account created
+        '400':
+          description: Something bad happened
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    RegisterAccountRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        firstName:
+          type: string
+        lastName:
+          type: string
+    ErrorResponse:
+      type: object
+      properties:
+        msg:
+          type: string
+        code:
+          type: number
