@@ -15,6 +15,34 @@ type AccountsRepoMock struct {
 	userAccount []models.UserAccount
 }
 
+func (repo *AccountsRepoMock) ActivateUserAccount(email, token string) error {
+	xidToken, err := xid.FromString(token)
+	if err != nil {
+		return err
+	}
+	if xidToken.Time().Before(time.Now().UTC().Add(-10 * time.Minute)) {
+		return errors.New("your token has expired")
+	}
+
+	for i := range repo.userAccount {
+		if repo.userAccount[i].Email != email {
+			continue
+		}
+
+		actualToken, err := xid.FromString(repo.userAccount[i].ActivationToken)
+		if err != nil {
+			return errors.New("internal error: the token of the user is not valid")
+		}
+
+		if actualToken.Compare(xidToken) == 0 {
+			repo.userAccount[i].IsActive = true
+			return nil
+		}
+	}
+
+	return errors.New("account with the provided email address not found")
+}
+
 func (repo *AccountsRepoMock) UpdateUser(userID int64, input *UpdateUserInput) (bool, error) {
 	if input == nil {
 		return false, nil
@@ -62,7 +90,7 @@ func (repo *AccountsRepoMock) SaveNewUser(ua models.UserAccount, password string
 	}
 	ua.ID = int64(len(repo.userAccount) + 1)
 	ua.Passhash = passhash
-	ua.ActivationToken = xid.NewWithTime(time.Now()).String()
+	ua.ActivationToken = xid.NewWithTime(time.Now().UTC()).String()
 	ua.IsActive = false
 
 	repo.userAccount = append(repo.userAccount, ua)
@@ -72,6 +100,9 @@ func (repo *AccountsRepoMock) SaveNewUser(ua models.UserAccount, password string
 func (repo *AccountsRepoMock) GetUserByEmailAndPassword(email, password string) (*models.UserAccount, error) {
 	for _, ua := range repo.userAccount {
 		if ua.Email == email {
+			if !ua.IsActive {
+				return nil, errors.New("account is not active")
+			}
 			if err := cryptoutils.Argon2Verify(password, ua.Passhash); err != nil {
 				break
 			}

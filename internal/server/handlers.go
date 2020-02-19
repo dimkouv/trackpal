@@ -65,6 +65,17 @@ func (ts TrackpalServer) authRegister(w http.ResponseWriter, req *http.Request) 
 	}
 }
 
+func (ts TrackpalServer) authActivate(w http.ResponseWriter, req *http.Request) {
+	err := ts.userService.ActivateUserAccount(req.Context(), req.Body)
+
+	switch err {
+	case nil:
+		response.HTTP(w).Status(http.StatusOK).JSON()
+	default:
+		response.HTTP(w).Error(err).Status(http.StatusBadRequest).JSON()
+	}
+}
+
 func (ts TrackpalServer) authLogin(w http.ResponseWriter, req *http.Request) {
 	b, err := ts.userService.GetJWTFromEmailAndPassword(req.Context(), req.Body)
 

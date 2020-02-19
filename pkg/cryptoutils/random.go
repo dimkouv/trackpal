@@ -8,7 +8,7 @@ import (
 
 // RandomString generates a random string of fixed length by using only chars that reside in choices array
 func RandomString(length int, choices []rune) string {
-	rand.Seed(time.Now().UnixNano())
+	rand.Seed(time.Now().UTC().UnixNano())
 
 	var b strings.Builder
 	for i := 0; i < length; i++ {

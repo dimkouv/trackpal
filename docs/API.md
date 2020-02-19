@@ -4,7 +4,7 @@
 
 Get a jwt token that can be used for authenticated requests
 ```bash
-http POST <url> <<< \
+http POST <url>/auth/login <<< \
 '{"email": "admin", "password": "1234"}'
 ```
 
@@ -49,6 +49,26 @@ http POST <url>/auth/register <<< \
 
 ```
 201
+---
+```
+
+```
+400
+---
+{"msg": "string"}
+```
+
+Activate your account with a token received upon registration or account recovery.
+```bash
+http POST <url>/auth/activate <<< \
+'{
+    "email": "me@mail.com", 
+    "token": "string"
+}'
+```
+
+```
+200
 ---
 ```
 

@@ -20,6 +20,32 @@ type AccountsRepositoryPostgres struct {
 	db *sqlx.DB
 }
 
+func (repo AccountsRepositoryPostgres) ActivateUserAccount(email, token string) error {
+	xidToken, err := xid.FromString(token)
+	if err != nil {
+		return err
+	}
+	if xidToken.Time().Before(time.Now().UTC().Add(-10 * time.Minute)) {
+		return errors.New("your token has expired")
+	}
+
+	q := `update user_account set is_active=true where email=$1 and activation_token=$2`
+	res, err := repo.db.Exec(q, email, token)
+	if err != nil {
+		return err
+	}
+
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return errors.New("account with the provided email address not found")
+	}
+
+	return nil
+}
+
 func (repo AccountsRepositoryPostgres) UpdateUser(userID int64, input *UpdateUserInput) (bool, error) {
 	if input == nil {
 		return false, nil
@@ -89,7 +115,7 @@ func (repo AccountsRepositoryPostgres) SaveNewUser(
 		return nil, fmt.Errorf("unable to generate passhash: %v", err)
 	}
 	ua.Passhash = passhash
-	ua.ActivationToken = xid.NewWithTime(time.Now()).String()
+	ua.ActivationToken = xid.NewWithTime(time.Now().UTC()).String()
 	ua.IsActive = false
 
 	const sqlQuery = `insert into user_account(email, passhash, first_name, last_name, is_active, activation_token)` +
@@ -111,6 +137,10 @@ func (repo AccountsRepositoryPostgres) GetUserByEmailAndPassword(email, password
 	err := repo.db.Get(&ua, sqlQuery, email)
 	if err != nil {
 		return nil, err
+	}
+
+	if !ua.IsActive {
+		return nil, errors.New("account is not active")
 	}
 
 	err = cryptoutils.Argon2Verify(password, ua.Passhash)

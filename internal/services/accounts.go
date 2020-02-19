@@ -60,7 +60,41 @@ func (s *UserAccountService) CreateUserAccount(ctx context.Context, rc io.Reader
 		return terror.New(ErrPlain, err.Error())
 	}
 
+	// TODO: send it with email, sms, etc...
 	logrus.Infof("user account created: activationToken=%v", createdUA.ActivationToken)
+	return nil
+}
+
+func (s *UserAccountService) ActivateUserAccount(ctx context.Context, rc io.Reader) error {
+	type activateUserAccountInput struct {
+		Email string `json:"email"`
+		Token string `json:"token"`
+	}
+
+	requestData, err := ioutil.ReadAll(rc)
+	if err != nil {
+		logrus.
+			WithField(consts.LogFieldErr, err).
+			Errorf("unable to read request body")
+		return terror.New(ErrBodyRead, err.Error())
+	}
+
+	activationReq := activateUserAccountInput{}
+	if err = json.Unmarshal(requestData, &activationReq); err != nil {
+		logrus.
+			WithField(consts.LogFieldBody, fmt.Sprintf("%s", requestData)).
+			WithField(consts.LogFieldErr, err).
+			Errorf("unable to parse request body")
+
+		return terror.New(ErrBodyParse, err.Error())
+	}
+
+	if err := s.repo.ActivateUserAccount(activationReq.Email, activationReq.Token); err != nil {
+		logrus.WithField(consts.LogFieldErr, err).Errorf("account activation failed")
+		return terror.New(ErrPlain, err.Error())
+	}
+
+	logrus.Debug("user account activated, token invalidated")
 	return nil
 }
 
