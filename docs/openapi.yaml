@@ -1,0 +1,369 @@
+openapi: '3.0.2'
+info:
+  description: >-
+    This is the API documentation for Trackpal. You can find the source code of
+    this RESTful API and/or open a PR
+    [here](https://github.com/dimkouv/trackpal).
+  version: 1.0.0
+  title: Trackpal
+  contact:
+    email: dimkouv@protonmail.com
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+
+servers:
+  - url: https://api.trackpal.xyz/v1
+
+tags:
+  - name: Account
+    description: Everything about your user account
+  - name: Tracking
+    description: Everything about location tracking
+
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Account
+      summary: Register a new user account
+      description: >-
+        Upon success, you will receive a confirmation email. The link will be
+        valid for a limited number of minutes.
+      operationId: authRegister
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRegisterRequest'
+      responses:
+        '201':
+          description: Account created
+        '400':
+          description: Something bad happened
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum: [ACCOUNT_EXISTS, INVALID_BODY, INVALID_EMAIL, INSECURE_PASSWORD]
+        '500':
+          description: Internal server error
+
+  /auth/login:
+    post:
+      tags:
+        - Account
+      summary: Login
+      description: >-
+        Get a jwt token that can be used for authenticated requests. This token expires after 10 minutes.
+      operationId: authLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthLoginRequest'
+      responses:
+        '200':
+          description: Login success
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: eyJhbGciOiJIUzI1NiIsInR5...
+        '400':
+          description: Something bad happened
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum: [NOT_FOUND, NOT_ACTIVATED, INVALID_BODY]
+        '500':
+          description: Internal server error
+
+  /auth/refresh:
+    post:
+      tags:
+        - Account
+      summary: Token refresh
+      description: >-
+        Refresh your jwt token. Responds with a new token.
+      operationId: authRefresh
+      responses:
+        '200':
+          description: Token was refreshed
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: eyJhbGciOiJIUzI1NiIsInR5...
+        '400':
+          description: Something bad happened
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum: [TOKEN_EXPIRED]
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /auth/activate:
+    get:
+      tags:
+        - Account
+      summary: Activate your account
+      description: >-
+        After registration you received a token. Use this token to activate your account. Note that this
+        token expires after some minutes.
+      operationId: authActivate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthActivateRequest'
+      responses:
+        '200':
+          description: Activation success
+        '400':
+          description: Something bad happened
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum: [INVALID_TOKEN, INVALID_BODY, TOKEN_EXPIRED, ALREADY_ACTIVE]
+        '500':
+          description: Internal server error
+
+  /tracking/devices:
+    get:
+      tags:
+        - Tracking
+      summary: Get all your tracking devices
+      description: >-
+        Fetch a short overview of all your tracking devices.
+      operationId: getTrackingDevices
+      responses:
+        '200':
+          description: Get a list of your tracking devices ascending by date recorded
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TrackingDevice'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+    post:
+      tags:
+        - Tracking
+      summary: Create a new tracking device
+      description: >-
+        Add a new tracking device under your account
+      operationId: postTrackingDevice
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTrackingDeviceInput'
+      responses:
+        '201':
+          description: Device created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrackingDevice'
+        '400':
+          description: Something bad happened
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum: [INVALID_BODY, INVALID_NAME]
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /tracking/devices/{deviceID}/records:
+    get:
+      tags:
+        - Tracking
+      summary: Get tracking records of device
+      description: >-
+        Get all the tracking records of a target device
+      parameters:
+        - name: deviceID
+          in: path
+          required: true
+          description: ID of the target device
+          schema:
+            type: number
+      operationId: getTrackingDeviceRecords
+      responses:
+        '200':
+          description: Get a list of the tracking records of a target device
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TrackingDeviceRecord'
+        '404':
+          description: The device was not found (or not owned by you)
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+    post:
+      tags:
+        - Tracking
+      summary: Create a new tracking record
+      description: >-
+        Create a new tracking record under the target device
+      operationId: postTrackingDeviceRecord
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTrackingDeviceRecordInput'
+      responses:
+        '201':
+          description: Record created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrackingDeviceRecord'
+        '400':
+          description: Something bad happened
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum: [INVALID_BODY, INVALID_INPUT]
+        '404':
+          description: The device was not found (or not owned by you)
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+components:
+  schemas:
+    AuthRegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        firstName:
+          type: string
+        lastName:
+          type: string
+
+    AuthLoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    AuthActivateRequest:
+      type: object
+      required:
+        - email
+        - token
+      properties:
+        email:
+          type: string
+          format: email
+        token:
+          type: string
+
+    TrackingDevice:
+      type: object
+      properties:
+        createdAt:
+          type: string
+          format: 'date-time'
+        id:
+          type: number
+        name:
+          type: string
+
+    TrackingDeviceRecord:
+      type: object
+      properties:
+        recordedAt:
+          type: string
+          format: 'date-time'
+        location:
+          type: object
+          properties:
+            lat:
+              type: number
+              format: float
+            lng:
+              type: number
+              format: float
+
+    CreateTrackingDeviceInput:
+      type: object
+      properties:
+        name:
+          type: string
+
+    CreateTrackingDeviceRecordInput:
+      type: object
+      properties:
+        recordedAt:
+          type: string
+          format: 'date-time'
+        location:
+          type: object
+          properties:
+            lat:
+              type: number
+              format: float
+            lng:
+              type: number
+              format: float

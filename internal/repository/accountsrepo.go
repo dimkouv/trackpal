@@ -8,6 +8,10 @@ type UserAccountRepository interface {
 	// for fetching the user.
 	SaveNewUser(ua models.UserAccount, password string) (*models.UserAccount, error)
 
+	// ActivateUserAccount receives a token and an email, if the token has not expired and it matches the email
+	// then the account gets activated.
+	ActivateUserAccount(email, token string) error
+
 	// GetUserByEmailAndPassword can be used for fetching a user that matches the target email and password.
 	GetUserByEmailAndPassword(email, password string) (*models.UserAccount, error)
 

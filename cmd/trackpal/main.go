@@ -1,9 +1,10 @@
 package main
 
 import (
+	"github.com/sirupsen/logrus"
+
 	"github.com/dimkouv/trackpal/internal/server"
 	"github.com/dimkouv/trackpal/internal/services"
-	"github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -19,7 +20,12 @@ func main() {
 		panic(err)
 	}
 
-	trackpalServer := server.NewTrackpalServer(*trackingService)
+	uaService, err := services.NewUserAccountServicePostgres(postgresDSN)
+	if err != nil {
+		panic(err)
+	}
+
+	trackpalServer := server.NewTrackpalServer(trackingService, uaService)
 	routes := trackpalServer.RegisterRoutes()
 	trackpalServer.ListenAndServe(serverAddr, routes)
 }

@@ -14,11 +14,15 @@ type Route struct {
 }
 
 type TrackpalServer struct {
-	trackingService services.TrackingService
-	userService     services.UserAccountService
+	trackingService *services.TrackingService
+	userService     *services.UserAccountService
 	routes          []Route
 }
 
-func NewTrackpalServer(trackingService services.TrackingService) TrackpalServer {
-	return TrackpalServer{trackingService: trackingService}
+func NewTrackpalServer(
+	trackingService *services.TrackingService, uaService *services.UserAccountService) TrackpalServer {
+	return TrackpalServer{
+		trackingService: trackingService,
+		userService:     uaService,
+	}
 }

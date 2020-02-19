@@ -20,6 +20,32 @@ type AccountsRepositoryPostgres struct {
 	db *sqlx.DB
 }
 
+func (repo AccountsRepositoryPostgres) ActivateUserAccount(email, token string) error {
+	xidToken, err := xid.FromString(token)
+	if err != nil {
+		return err
+	}
+	if xidToken.Time().Before(time.Now().UTC().Add(-10 * time.Minute)) {
+		return errors.New("your token has expired")
+	}
+
+	q := `update user_account set is_active=true where email=$1 and activation_token=$2`
+	res, err := repo.db.Exec(q, email, token)
+	if err != nil {
+		return err
+	}
+
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return errors.New("account with the provided email address not found")
+	}
+
+	return nil
+}
+
 func (repo AccountsRepositoryPostgres) UpdateUser(userID int64, input *UpdateUserInput) (bool, error) {
 	if input == nil {
 		return false, nil
@@ -27,28 +53,33 @@ func (repo AccountsRepositoryPostgres) UpdateUser(userID int64, input *UpdateUse
 
 	queryUpdateFields := make([]string, 0)
 	args := make([]interface{}, 0)
-	switch {
-	case input.ActivationToken != nil:
+
+	if input.ActivationToken != nil {
 		args = append(args, *input.ActivationToken)
 		queryUpdateFields = append(queryUpdateFields, fmt.Sprintf("activation_token=$%d", len(args)))
-		fallthrough
-	case input.IsActive != nil:
+	}
+
+	if input.IsActive != nil {
 		args = append(args, *input.IsActive)
 		queryUpdateFields = append(queryUpdateFields, fmt.Sprintf("is_active=$%d", len(args)))
-		fallthrough
-	case input.LastName != nil:
+	}
+
+	if input.LastName != nil {
 		args = append(args, *input.LastName)
 		queryUpdateFields = append(queryUpdateFields, fmt.Sprintf("last_name=$%d", len(args)))
-		fallthrough
-	case input.FirstName != nil:
+	}
+
+	if input.FirstName != nil {
 		args = append(args, *input.FirstName)
 		queryUpdateFields = append(queryUpdateFields, fmt.Sprintf("first_name=$%d", len(args)))
-		fallthrough
-	case input.Email != nil:
+	}
+
+	if input.Email != nil {
 		args = append(args, *input.Email)
 		queryUpdateFields = append(queryUpdateFields, fmt.Sprintf("email=$%d", len(args)))
-		fallthrough
-	case input.Password != nil:
+	}
+
+	if input.Password != nil {
 		passhash, err := cryptoutils.Argon2Hash(*input.Password)
 		if err != nil {
 			return false, fmt.Errorf("unable to generate passhash: %v", err)
@@ -79,16 +110,12 @@ func (repo AccountsRepositoryPostgres) UpdateUser(userID int64, input *UpdateUse
 
 func (repo AccountsRepositoryPostgres) SaveNewUser(
 	ua models.UserAccount, password string) (*models.UserAccount, error) {
-	if err := ua.Validate(); err != nil {
-		return nil, err
-	}
-
 	passhash, err := cryptoutils.Argon2Hash(password)
 	if err != nil {
 		return nil, fmt.Errorf("unable to generate passhash: %v", err)
 	}
 	ua.Passhash = passhash
-	ua.ActivationToken = xid.NewWithTime(time.Now()).String()
+	ua.ActivationToken = xid.NewWithTime(time.Now().UTC()).String()
 	ua.IsActive = false
 
 	const sqlQuery = `insert into user_account(email, passhash, first_name, last_name, is_active, activation_token)` +
@@ -110,6 +137,10 @@ func (repo AccountsRepositoryPostgres) GetUserByEmailAndPassword(email, password
 	err := repo.db.Get(&ua, sqlQuery, email)
 	if err != nil {
 		return nil, err
+	}
+
+	if !ua.IsActive {
+		return nil, errors.New("account is not active")
 	}
 
 	err = cryptoutils.Argon2Verify(password, ua.Passhash)
