@@ -28,13 +28,13 @@ paths:
       description: >-
         Upon success, you will receive a confirmation email. The link will be
         valid for a limited number of minutes.
-      operationId: registerAccount
+      operationId: authRegister
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RegisterAccountRequest'
+              $ref: '#/components/schemas/AuthRegisterRequest'
       responses:
         '201':
           description: Account created
@@ -43,23 +43,114 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum: [ACCOUNT_EXISTS, INVALID_BODY, INVALID_EMAIL, INSECURE_PASSWORD]
         '500':
           description: Internal server error
+
+  /auth/login:
+    post:
+      tags:
+        - Account
+      summary: Login
+      description: >-
+        Get a jwt token that can be used for authenticated requests. This token expires after 10 minutes.
+      operationId: authLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthLoginRequest'
+      responses:
+        '200':
+          description: Login success
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: eyJhbGciOiJIUzI1NiIsInR5...
+        '400':
+          description: Something bad happened
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum: [NOT_FOUND, NOT_ACTIVATED, INVALID_BODY]
+        '500':
+          description: Internal server error
+
+  /auth/refresh:
+    post:
+      tags:
+        - Account
+      summary: Token refresh
+      description: >-
+        Refresh your jwt token. Responds with a new token.
+      operationId: authRefresh
+      responses:
+        '200':
+          description: Token was refreshed
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: eyJhbGciOiJIUzI1NiIsInR5...
+        '400':
+          description: Something bad happened
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum: [TOKEN_EXPIRED]
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
+  /auth/activate:
+    get:
+      tags:
+        - Account
+      summary: Activate your account
+      description: >-
+        After registration you received a token. Use this token to activate your account. Note that this
+        token expires after some minutes.
+      operationId: authActivate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthActivateRequest'
+      responses:
+        '200':
+          description: Activation success
+        '400':
+          description: Something bad happened
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum: [INVALID_TOKEN, INVALID_BODY, TOKEN_EXPIRED, ALREADY_ACTIVE]
+        '500':
+          description: Internal server error
 
 components:
   schemas:
-    RegisterAccountRequest:
+    AuthRegisterRequest:
       type: object
       required:
         - email
@@ -75,10 +166,28 @@ components:
           type: string
         lastName:
           type: string
-    ErrorResponse:
+
+    AuthLoginRequest:
       type: object
+      required:
+        - email
+        - password
       properties:
-        msg:
+        email:
           type: string
-        code:
-          type: number
+          format: email
+        password:
+          type: string
+          format: password
+
+    AuthActivateRequest:
+      type: object
+      required:
+        - email
+        - token
+      properties:
+        email:
+          type: string
+          format: email
+        token:
+          type: string
