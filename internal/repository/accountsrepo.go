@@ -1,6 +1,16 @@
 package repository
 
-import "github.com/dimkouv/trackpal/internal/models"
+import (
+	"errors"
+
+	"github.com/dimkouv/trackpal/internal/models"
+)
+
+var (
+	// ErrAccountExists raised when an operation that tries to create a user account with some details
+	// that are unique (e.g. email) but they already exist
+	ErrAccountExists = errors.New("an account with the provided details already exists")
+)
 
 // UserAccountRepository contains methods for operations on user accounts
 type UserAccountRepository interface {

@@ -2,6 +2,7 @@ package response
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/sirupsen/logrus"
@@ -35,6 +36,11 @@ func (r *Response) Data(data []byte) *Response {
 
 func (r *Response) Error(err error) *Response {
 	r.err = err
+	return r
+}
+
+func (r *Response) ErrorStr(errStr string) *Response {
+	r.err = errors.New(errStr)
 	return r
 }
 

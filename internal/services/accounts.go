@@ -12,14 +12,13 @@ import (
 	"github.com/dimkouv/trackpal/internal/consts"
 	"github.com/dimkouv/trackpal/internal/models"
 	"github.com/dimkouv/trackpal/internal/repository"
-	"github.com/dimkouv/trackpal/pkg/terror"
 )
 
 type UserAccountService struct {
 	repo repository.UserAccountRepository
 }
 
-func (s *UserAccountService) CreateUserAccount(ctx context.Context, rc io.Reader) error {
+func (s *UserAccountService) CreateUserAccount(_ context.Context, rc io.Reader) error {
 	type createUserAccountInput struct {
 		Email     string `json:"email"`
 		Password  string `json:"password"`
@@ -32,7 +31,7 @@ func (s *UserAccountService) CreateUserAccount(ctx context.Context, rc io.Reader
 		logrus.
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to read request body")
-		return terror.New(ErrBodyRead, err.Error())
+		return consts.ErrEnumInvalidBody
 	}
 
 	uaReq := createUserAccountInput{}
@@ -41,8 +40,7 @@ func (s *UserAccountService) CreateUserAccount(ctx context.Context, rc io.Reader
 			WithField(consts.LogFieldBody, fmt.Sprintf("%s", requestData)).
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to parse request body")
-
-		return terror.New(ErrBodyParse, err.Error())
+		return consts.ErrEnumInvalidBody
 	}
 
 	ua := models.UserAccount{
@@ -50,14 +48,28 @@ func (s *UserAccountService) CreateUserAccount(ctx context.Context, rc io.Reader
 		FirstName: uaReq.FirstName,
 		LastName:  uaReq.LastName,
 	}
-	if err = ua.Validate(); err != nil {
-		return err
+
+	if !consts.RgxEmail.MatchString(uaReq.Email) {
+		logrus.
+			WithField(consts.LogFieldBody, fmt.Sprintf("%s", requestData)).
+			WithField(consts.LogFieldErr, err).
+			Errorf("unable to parse request body")
+		return consts.ErrEnumInvalidEmail
+	}
+
+	if len(uaReq.Password) < 6 {
+		logrus.Errorf("the provided password '%s' is not secure", uaReq.Password)
+		return consts.ErrEnumInsecurePassword
 	}
 
 	createdUA, err := s.repo.SaveNewUser(ua, uaReq.Password)
-	if err != nil {
+	switch {
+	case err == repository.ErrAccountExists:
+		logrus.Errorf("target account already exists '%s'", uaReq.Email)
+		return consts.ErrEnumAccountExists
+	case err != nil:
 		logrus.WithField(consts.LogFieldErr, err).Errorf("unable to save user")
-		return terror.New(ErrPlain, err.Error())
+		return err
 	}
 
 	// TODO: send it with email, sms, etc...
@@ -76,7 +88,7 @@ func (s *UserAccountService) ActivateUserAccount(ctx context.Context, rc io.Read
 		logrus.
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to read request body")
-		return terror.New(ErrBodyRead, err.Error())
+		return consts.ErrEnumInvalidBody
 	}
 
 	activationReq := activateUserAccountInput{}
@@ -86,12 +98,12 @@ func (s *UserAccountService) ActivateUserAccount(ctx context.Context, rc io.Read
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to parse request body")
 
-		return terror.New(ErrBodyParse, err.Error())
+		return consts.ErrEnumInvalidBody
 	}
 
 	if err := s.repo.ActivateUserAccount(activationReq.Email, activationReq.Token); err != nil {
 		logrus.WithField(consts.LogFieldErr, err).Errorf("account activation failed")
-		return terror.New(ErrPlain, err.Error())
+		return err
 	}
 
 	logrus.Debug("user account activated, token invalidated")
@@ -110,7 +122,7 @@ func (s *UserAccountService) GetJWTFromEmailAndPassword(ctx context.Context, rc 
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to read request body")
 
-		return nil, terror.New(ErrBodyRead, err.Error())
+		return nil, consts.ErrEnumInvalidBody
 	}
 
 	uaReq := emailPasswordInput{}
@@ -121,7 +133,7 @@ func (s *UserAccountService) GetJWTFromEmailAndPassword(ctx context.Context, rc 
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to parse request body")
 
-		return nil, terror.New(ErrBodyParse, err.Error())
+		return nil, consts.ErrEnumInvalidBody
 	}
 
 	ua, err := s.repo.GetUserByEmailAndPassword(uaReq.Email, uaReq.Password)
@@ -130,7 +142,7 @@ func (s *UserAccountService) GetJWTFromEmailAndPassword(ctx context.Context, rc 
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to fetch user by email and password")
 
-		return nil, terror.New(ErrBodyParse, err.Error())
+		return nil, consts.ErrEnumInvalidBody
 	}
 
 	tokenString, err := ua.GetJWT()
@@ -139,7 +151,7 @@ func (s *UserAccountService) GetJWTFromEmailAndPassword(ctx context.Context, rc 
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to get jwt")
 
-		return nil, terror.New(ErrBodyParse, err.Error())
+		return nil, consts.ErrEnumInvalidBody
 	}
 
 	return []byte(tokenString), nil
@@ -154,7 +166,7 @@ func (s *UserAccountService) RefreshJWT(ctx context.Context) ([]byte, error) {
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to get jwt")
 
-		return nil, terror.New(ErrBodyParse, err.Error())
+		return nil, consts.ErrEnumInvalidBody
 	}
 
 	return []byte(tokenString), nil

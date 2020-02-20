@@ -93,6 +93,12 @@ func (repo *AccountsRepoMock) SaveNewUser(ua models.UserAccount, password string
 	ua.ActivationToken = xid.NewWithTime(time.Now().UTC()).String()
 	ua.IsActive = false
 
+	for _, u := range repo.userAccount {
+		if u.Email == ua.Email {
+			return nil, ErrAccountExists
+		}
+	}
+
 	repo.userAccount = append(repo.userAccount, ua)
 	return &ua, nil
 }

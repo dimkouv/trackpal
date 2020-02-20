@@ -3,6 +3,8 @@ package server
 import (
 	"net/http"
 
+	"github.com/dimkouv/trackpal/pkg/terror"
+
 	"github.com/dimkouv/trackpal/pkg/response"
 
 	"github.com/gorilla/mux"
@@ -56,12 +58,15 @@ func (ts TrackpalServer) addTrackRecordOfDevice(w http.ResponseWriter, req *http
 
 func (ts TrackpalServer) authRegister(w http.ResponseWriter, req *http.Request) {
 	err := ts.userService.CreateUserAccount(req.Context(), req.Body)
+	terr, isTerr := err.(terror.Terror)
 
-	switch err {
-	case nil:
-		response.HTTP(w).Status(http.StatusCreated).JSON()
+	switch {
+	case err == nil:
+		response.HTTP(w).Status(http.StatusCreated).TEXT()
+	case !isTerr:
+		response.HTTP(w).Status(http.StatusInternalServerError).TEXT()
 	default:
-		response.HTTP(w).Error(err).Status(http.StatusBadRequest).JSON()
+		response.HTTP(w).Status(http.StatusBadRequest).Error(terr).TEXT()
 	}
 }
 

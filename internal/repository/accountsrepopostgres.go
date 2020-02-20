@@ -10,6 +10,7 @@ import (
 	"github.com/dimkouv/trackpal/internal/models"
 	"github.com/dimkouv/trackpal/pkg/cryptoutils"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	"github.com/rs/xid"
 	"github.com/sirupsen/logrus"
 )
@@ -124,6 +125,10 @@ func (repo AccountsRepositoryPostgres) SaveNewUser(
 	err = repo.db.QueryRow(sqlQuery, ua.Email, ua.Passhash, ua.FirstName, ua.LastName, ua.IsActive, ua.ActivationToken).
 		Scan(&ua.ID)
 	if err != nil {
+		pqErr, isPqErr := err.(*pq.Error)
+		if isPqErr && pqErr.Code == consts.PQCodeUniqueKeyViolation {
+			return nil, ErrAccountExists
+		}
 		return nil, err
 	}
 
