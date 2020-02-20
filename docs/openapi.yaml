@@ -120,7 +120,7 @@ paths:
           description: Internal server error
 
   /auth/activate:
-    get:
+    post:
       tags:
         - Account
       summary: Activate your account
@@ -244,6 +244,13 @@ paths:
       summary: Create a new tracking record
       description: >-
         Create a new tracking record under the target device
+      parameters:
+        - name: deviceID
+          in: path
+          required: true
+          description: ID of the target device
+          schema:
+            type: number
       operationId: postTrackingDeviceRecord
       requestBody:
         required: true
@@ -367,3 +374,4 @@ components:
             lng:
               type: number
               format: float
+
