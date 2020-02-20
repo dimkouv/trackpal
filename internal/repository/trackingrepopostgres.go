@@ -4,11 +4,12 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/dimkouv/trackpal/internal/consts"
-	"github.com/dimkouv/trackpal/internal/models"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/sirupsen/logrus"
+
+	"github.com/dimkouv/trackpal/internal/consts"
+	"github.com/dimkouv/trackpal/internal/models"
 )
 
 type TrackingRepositoryPostgres struct {
@@ -111,7 +112,9 @@ func NewTrackingRepositoryPostgres(postgresDSN string) (*TrackingRepositoryPostg
 			Error("unable to connect to postgres")
 		return nil, err
 	}
-	logrus.Info("postgres connection success")
+	logrus.
+		WithField(consts.LogFieldRepo, "tracking_repository_postgres").
+		Info("postgres connection success")
 
 	return &TrackingRepositoryPostgres{db: db}, nil
 }

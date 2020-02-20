@@ -69,7 +69,7 @@ func (s *UserAccountService) CreateUserAccount(_ context.Context, rc io.Reader) 
 		return consts.ErrEnumAccountExists
 	case err != nil:
 		logrus.WithField(consts.LogFieldErr, err).Errorf("unable to save user")
-		return err
+		return consts.ErrEnumGenericError
 	}
 
 	// TODO: send it with email, sms, etc...
@@ -101,9 +101,17 @@ func (s *UserAccountService) ActivateUserAccount(ctx context.Context, rc io.Read
 		return consts.ErrEnumInvalidBody
 	}
 
-	if err := s.repo.ActivateUserAccount(activationReq.Email, activationReq.Token); err != nil {
-		logrus.WithField(consts.LogFieldErr, err).Errorf("account activation failed")
-		return err
+	err = s.repo.ActivateUserAccount(activationReq.Email, activationReq.Token)
+	if err != nil {
+		logrus.WithField(consts.LogFieldErr, err).Errorf("unable to activate account")
+		switch err {
+		case repository.ErrTokenNotFound:
+			return consts.ErrEnumNotFound
+		case repository.ErrTokenExpired:
+			return consts.ErrEnumTokenExpired
+		default:
+			return consts.ErrEnumGenericError
+		}
 	}
 
 	logrus.Debug("user account activated, token invalidated")
@@ -143,7 +151,7 @@ func (s *UserAccountService) GetJWTFromEmailAndPassword(ctx context.Context, rc 
 		return nil, consts.ErrEnumNotFound
 	case err != nil:
 		logrus.WithField(consts.LogFieldErr, err).Errorf("unable to save user")
-		return nil, err
+		return nil, consts.ErrEnumGenericError
 	case !ua.IsActive:
 		logrus.Errorf("target account not active '%s'", uaReq.Email)
 		return nil, consts.ErrEnumNotActivated
@@ -155,14 +163,14 @@ func (s *UserAccountService) GetJWTFromEmailAndPassword(ctx context.Context, rc 
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to get jwt")
 
-		return nil, consts.ErrInternal
+		return nil, consts.ErrEnumGenericError
 	}
 
 	return []byte(tokenString), nil
 }
 
 func (s *UserAccountService) RefreshJWT(ctx context.Context) ([]byte, error) {
-	ua, exists := ctx.Value("user").(models.UserAccount)
+	ua, exists := ctx.Value(consts.CtxUser).(models.UserAccount)
 	if !exists {
 		return nil, consts.ErrEnumUnauthorized
 	}
@@ -172,7 +180,7 @@ func (s *UserAccountService) RefreshJWT(ctx context.Context) ([]byte, error) {
 		logrus.
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to get jwt")
-		return nil, err
+		return nil, consts.ErrEnumGenericError
 	}
 
 	return []byte(tokenString), nil

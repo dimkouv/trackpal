@@ -21,7 +21,7 @@ type TrackingService struct {
 }
 
 func (service TrackingService) GetDevicesAsJSON(ctx context.Context) ([]byte, error) {
-	ua := ctx.Value("user").(models.UserAccount)
+	ua := ctx.Value(consts.CtxUser).(models.UserAccount)
 
 	results, err := service.repo.GetDevices(ua.ID)
 	if err != nil {
@@ -71,7 +71,7 @@ func (service TrackingService) SaveDevice(ctx context.Context, rc io.Reader) ([]
 		return nil, err
 	}
 
-	ua := ctx.Value("user").(models.UserAccount)
+	ua := ctx.Value(consts.CtxUser).(models.UserAccount)
 	d.UserID = ua.ID
 	device, err := service.repo.SaveNewDevice(d)
 	if err != nil {
@@ -119,7 +119,7 @@ func (service TrackingService) SaveTrackInput(
 		return nil, err
 	}
 
-	ua := ctx.Value("user").(models.UserAccount)
+	ua := ctx.Value(consts.CtxUser).(models.UserAccount)
 	if device.UserID != ua.ID {
 		logrus.
 			WithField("user_id", ua.ID).
@@ -174,7 +174,7 @@ func (service TrackingService) GetAllTrackInputsOfDeviceAsJSON(
 		return nil, err
 	}
 
-	ua := ctx.Value("user").(models.UserAccount)
+	ua := ctx.Value(consts.CtxUser).(models.UserAccount)
 	if device.UserID != ua.ID {
 		logrus.
 			WithField("user_id", ua.ID).

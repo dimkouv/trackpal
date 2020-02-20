@@ -7,9 +7,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// RegisterRoutes register all the routes that are declared in this package
-func (ts TrackpalServer) RegisterRoutes() *mux.Router {
-	ts.routes = []Route{
+func (ts TrackpalServer) authRoutes() []Route {
+	return []Route{
 		{
 			Pattern:     "/auth/register",
 			HandlerFunc: ts.authRegister,
@@ -35,8 +34,10 @@ func (ts TrackpalServer) RegisterRoutes() *mux.Router {
 			Name:        "authLogin",
 		},
 	}
+}
 
-	ts.routes = append(ts.routes, []Route{
+func (ts TrackpalServer) trackingRoutes() []Route {
+	return []Route{
 		{
 			Pattern:     "/tracking/devices",
 			HandlerFunc: ts.withUser(ts.getDevices),
@@ -61,7 +62,14 @@ func (ts TrackpalServer) RegisterRoutes() *mux.Router {
 			Method:      "POST",
 			Name:        "postTrackingDeviceRecord",
 		},
-	}...)
+	}
+}
+
+// RegisterRoutes register all the routes that are declared in this package
+func (ts TrackpalServer) RegisterRoutes() *mux.Router {
+	ts.routes = []Route{}
+	ts.routes = append(ts.routes, ts.authRoutes()...)
+	ts.routes = append(ts.routes, ts.trackingRoutes()...)
 
 	router := mux.NewRouter().StrictSlash(true)
 	for _, route := range ts.routes {

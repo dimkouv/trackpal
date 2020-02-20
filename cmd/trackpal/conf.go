@@ -2,6 +2,7 @@ package main
 
 import "github.com/dimkouv/trackpal/internal/envlib"
 
+// nolint: gochecknoglobals
 var (
 	postgresDSN = envlib.GetEnvOrDefault(
 		"TRACKPAL_POSTGRES_DSN",

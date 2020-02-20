@@ -13,6 +13,12 @@ var (
 
 	// ErrUserAccountNotFound raised when the user account/password combination was not found.
 	ErrUserAccountNotFound = errors.New("the user account was not found")
+
+	// ErrTokenNotFound raised when the account/token for activation was not found or expired
+	ErrTokenNotFound = errors.New("the token was not found")
+
+	// ErrTokenExpired raised when a token has expired
+	ErrTokenExpired = errors.New("the token has expired")
 )
 
 // UserAccountRepository contains methods for operations on user accounts

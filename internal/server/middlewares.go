@@ -17,10 +17,10 @@ func (ts *TrackpalServer) withUser(next http.HandlerFunc) http.HandlerFunc {
 
 		switch {
 		case err == nil:
-			ctx := context.WithValue(req.Context(), "user", *ua)
+			ctx := context.WithValue(req.Context(), consts.CtxUser, *ua)
 			next.ServeHTTP(w, req.WithContext(ctx))
-		case err == consts.ErrTokenExpired:
-			response.HTTP(w).Error(err).Status(http.StatusBadRequest).JSON()
+		case err == models.ErrJWTTokenExpired:
+			response.HTTP(w).Status(http.StatusUnauthorized).JSON()
 		default:
 			logrus.WithField(consts.LogFieldErr, err).Error("unable to load user from jwt")
 			response.HTTP(w).Status(http.StatusUnauthorized).JSON()

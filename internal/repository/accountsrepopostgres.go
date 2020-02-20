@@ -2,21 +2,19 @@ package repository
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/dimkouv/trackpal/internal/consts"
-	"github.com/dimkouv/trackpal/internal/models"
-	"github.com/dimkouv/trackpal/pkg/cryptoutils"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/rs/xid"
 	"github.com/sirupsen/logrus"
-)
 
-const repoName = "accounts_repository_postgres"
+	"github.com/dimkouv/trackpal/internal/consts"
+	"github.com/dimkouv/trackpal/internal/models"
+	"github.com/dimkouv/trackpal/pkg/cryptoutils"
+)
 
 type AccountsRepositoryPostgres struct {
 	db *sqlx.DB
@@ -28,7 +26,7 @@ func (repo AccountsRepositoryPostgres) ActivateUserAccount(email, token string) 
 		return err
 	}
 	if xidToken.Time().Before(time.Now().UTC().Add(-10 * time.Minute)) {
-		return errors.New("your token has expired")
+		return ErrTokenExpired
 	}
 
 	q := `update user_account set is_active=true where email=$1 and activation_token=$2`
@@ -40,9 +38,8 @@ func (repo AccountsRepositoryPostgres) ActivateUserAccount(email, token string) 
 	n, err := res.RowsAffected()
 	if err != nil {
 		return err
-	}
-	if n == 0 {
-		return errors.New("account with the provided email address not found")
+	} else if n == 0 {
+		return ErrTokenNotFound
 	}
 
 	return nil
@@ -159,6 +156,7 @@ func (repo AccountsRepositoryPostgres) GetUserByEmailAndPassword(email, password
 }
 
 func NewAccountsRepositoryPostgres(postgresDSN string) (*AccountsRepositoryPostgres, error) {
+	repoName := "accounts_repository_postgres"
 	db, err := sqlx.Connect("postgres", postgresDSN)
 
 	logrus.

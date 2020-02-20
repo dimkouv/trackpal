@@ -49,7 +49,7 @@ paths:
                 properties:
                   error:
                     type: string
-                    enum: [ACCOUNT_EXISTS, INVALID_BODY, INVALID_EMAIL, INSECURE_PASSWORD]
+                    enum: [ACCOUNT_EXISTS, INVALID_BODY, INVALID_EMAIL, INSECURE_PASSWORD, GENERIC_ERROR]
         '500':
           description: Internal server error
 
@@ -84,7 +84,7 @@ paths:
                 properties:
                   error:
                     type: string
-                    enum: [NOT_ACTIVATED, INVALID_BODY]
+                    enum: [NOT_ACTIVATED, INVALID_BODY, GENERIC_ERROR]
         '404':
           description: Account with email/password combination not found
           content:
@@ -123,7 +123,7 @@ paths:
                 properties:
                   error:
                     type: string
-                    enum: [TOKEN_EXPIRED]
+                    enum: [TOKEN_EXPIRED, GENERIC_ERROR]
         '401':
           description: Unauthorized
         '500':
@@ -156,7 +156,9 @@ paths:
                 properties:
                   error:
                     type: string
-                    enum: [INVALID_TOKEN, INVALID_BODY, TOKEN_EXPIRED, ALREADY_ACTIVE]
+                    enum: [INVALID_BODY, TOKEN_EXPIRED, GENERIC_ERROR]
+        '404':
+          description: Token/Account combination not found or account already active
         '500':
           description: Internal server error
 
