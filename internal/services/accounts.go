@@ -137,12 +137,16 @@ func (s *UserAccountService) GetJWTFromEmailAndPassword(ctx context.Context, rc 
 	}
 
 	ua, err := s.repo.GetUserByEmailAndPassword(uaReq.Email, uaReq.Password)
-	if err != nil {
-		logrus.
-			WithField(consts.LogFieldErr, err).
-			Errorf("unable to fetch user by email and password")
-
-		return nil, consts.ErrEnumInvalidBody
+	switch {
+	case err == repository.ErrUserAccountNotFound:
+		logrus.Errorf("target account not found '%s'", uaReq.Email)
+		return nil, consts.ErrEnumNotFound
+	case err != nil:
+		logrus.WithField(consts.LogFieldErr, err).Errorf("unable to save user")
+		return nil, err
+	case !ua.IsActive:
+		logrus.Errorf("target account not active '%s'", uaReq.Email)
+		return nil, consts.ErrEnumNotActivated
 	}
 
 	tokenString, err := ua.GetJWT()
@@ -151,7 +155,7 @@ func (s *UserAccountService) GetJWTFromEmailAndPassword(ctx context.Context, rc 
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to get jwt")
 
-		return nil, consts.ErrEnumInvalidBody
+		return nil, consts.ErrInternal
 	}
 
 	return []byte(tokenString), nil

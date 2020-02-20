@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"strings"
@@ -139,13 +140,13 @@ func (repo AccountsRepositoryPostgres) GetUserByEmailAndPassword(email, password
 	ua := models.UserAccount{}
 	const sqlQuery = `select id, email, passhash, first_name, last_name, is_active, activation_token from` +
 		` user_account where email=$1`
+
 	err := repo.db.Get(&ua, sqlQuery, email)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrUserAccountNotFound
+		}
 		return nil, err
-	}
-
-	if !ua.IsActive {
-		return nil, errors.New("account is not active")
 	}
 
 	err = cryptoutils.Argon2Verify(password, ua.Passhash)
@@ -153,7 +154,7 @@ func (repo AccountsRepositoryPostgres) GetUserByEmailAndPassword(email, password
 	case nil:
 		return &ua, nil
 	default:
-		return nil, errors.New("user account not found")
+		return nil, ErrUserAccountNotFound
 	}
 }
 

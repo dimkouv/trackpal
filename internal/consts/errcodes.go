@@ -12,4 +12,7 @@ var (
 	ErrEnumInvalidBody      = terror.New(400, "INVALID_BODY")
 	ErrEnumInvalidEmail     = terror.New(400, "INVALID_EMAIL")
 	ErrEnumInsecurePassword = terror.New(400, "INSECURE_PASSWORD")
+	ErrEnumNotActivated     = terror.New(400, "NOT_ACTIVATED")
+	ErrEnumNotFound         = terror.New(404, "NOT_FOUND")
+	ErrInternal             = terror.New(500, "INTERNAL_ERROR")
 )

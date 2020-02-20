@@ -66,7 +66,7 @@ func (ts TrackpalServer) authRegister(w http.ResponseWriter, req *http.Request) 
 	case !isTerr:
 		response.HTTP(w).Status(http.StatusInternalServerError).TEXT()
 	default:
-		response.HTTP(w).Status(http.StatusBadRequest).Error(terr).TEXT()
+		response.HTTP(w).Status(terr.Code()).Error(terr).JSON()
 	}
 }
 
@@ -83,12 +83,15 @@ func (ts TrackpalServer) authActivate(w http.ResponseWriter, req *http.Request) 
 
 func (ts TrackpalServer) authLogin(w http.ResponseWriter, req *http.Request) {
 	b, err := ts.userService.GetJWTFromEmailAndPassword(req.Context(), req.Body)
+	terr, isTerr := err.(terror.Terror)
 
-	switch err {
-	case nil:
+	switch {
+	case err == nil:
 		response.HTTP(w).Data(b).Status(http.StatusOK).JSON()
+	case !isTerr:
+		response.HTTP(w).Status(http.StatusInternalServerError).TEXT()
 	default:
-		response.HTTP(w).Error(err).Status(http.StatusBadRequest).JSON()
+		response.HTTP(w).Status(terr.Code()).Error(terr).JSON()
 	}
 }
 

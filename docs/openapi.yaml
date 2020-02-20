@@ -84,7 +84,17 @@ paths:
                 properties:
                   error:
                     type: string
-                    enum: [NOT_FOUND, NOT_ACTIVATED, INVALID_BODY]
+                    enum: [NOT_ACTIVATED, INVALID_BODY]
+        '404':
+          description: Account with email/password combination not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum: [NOT_FOUND]
         '500':
           description: Internal server error
 

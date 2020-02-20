@@ -107,7 +107,7 @@ func (repo *AccountsRepoMock) GetUserByEmailAndPassword(email, password string) 
 	for _, ua := range repo.userAccount {
 		if ua.Email == email {
 			if !ua.IsActive {
-				return nil, errors.New("account is not active")
+				return nil, ErrUserAccountNotFound
 			}
 			if err := cryptoutils.Argon2Verify(password, ua.Passhash); err != nil {
 				break
@@ -116,7 +116,7 @@ func (repo *AccountsRepoMock) GetUserByEmailAndPassword(email, password string) 
 		}
 	}
 
-	return nil, errors.New("user account not found")
+	return nil, ErrUserAccountNotFound
 }
 
 func NewAccountsRepoMock() *AccountsRepoMock {
