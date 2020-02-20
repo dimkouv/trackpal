@@ -1,6 +1,8 @@
 package consts
 
-import "github.com/dimkouv/trackpal/pkg/terror"
+import (
+	"github.com/dimkouv/trackpal/pkg/terror"
+)
 
 const (
 	PQCodeForeignKeyViolation = "23503"
@@ -15,4 +17,6 @@ var (
 	ErrEnumNotActivated     = terror.New(400, "NOT_ACTIVATED")
 	ErrEnumNotFound         = terror.New(404, "NOT_FOUND")
 	ErrInternal             = terror.New(500, "INTERNAL_ERROR")
+	ErrEnumUnauthorized     = terror.New(401, "UNAUTHORIZED")
+	ErrTokenExpired         = terror.New(400, "TOKEN_EXPIRED")
 )

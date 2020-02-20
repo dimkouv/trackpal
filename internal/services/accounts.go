@@ -162,15 +162,17 @@ func (s *UserAccountService) GetJWTFromEmailAndPassword(ctx context.Context, rc 
 }
 
 func (s *UserAccountService) RefreshJWT(ctx context.Context) ([]byte, error) {
-	ua := ctx.Value("user").(models.UserAccount)
+	ua, exists := ctx.Value("user").(models.UserAccount)
+	if !exists {
+		return nil, consts.ErrEnumUnauthorized
+	}
 
 	tokenString, err := ua.GetJWT()
 	if err != nil {
 		logrus.
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to get jwt")
-
-		return nil, consts.ErrEnumInvalidBody
+		return nil, err
 	}
 
 	return []byte(tokenString), nil

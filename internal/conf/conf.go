@@ -1,5 +1,7 @@
 package conf
 
+import "github.com/dimkouv/trackpal/internal/envlib"
+
 type Argon2Conf struct {
 	Memory      uint32
 	Iterations  uint32
@@ -18,5 +20,8 @@ var (
 		KeyLength:   32,
 	}
 
-	JWTSignBytes = []byte("you-should-change-this-to-something-secure")
+	JWTSignBytes = []byte(envlib.GetEnvOrDefault(
+		"TRACKPAL_SIGN_KEY",
+		"you-should-change-this-to-something-secure",
+	))
 )

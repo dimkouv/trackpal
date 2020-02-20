@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/dimkouv/trackpal/internal/conf"
+	"github.com/dimkouv/trackpal/internal/consts"
 )
 
 type UserAccount struct {
@@ -55,7 +56,7 @@ func (ua *UserAccount) FromJWT(tokenString string) (*UserAccount, error) {
 			return nil, err
 		}
 		if createdAtUTC.Before(time.Now().UTC().Add(-5 * time.Minute)) {
-			return nil, errors.New("token has expired")
+			return nil, consts.ErrTokenExpired
 		}
 
 		ua.Email = claims["email"].(string)
