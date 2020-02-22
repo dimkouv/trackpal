@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -21,7 +20,7 @@ func (repo *AccountsRepoMock) ActivateUserAccount(email, token string) error {
 		return err
 	}
 	if xidToken.Time().Before(time.Now().UTC().Add(-10 * time.Minute)) {
-		return errors.New("your token has expired")
+		return ErrTokenExpired
 	}
 
 	for i := range repo.userAccount {
@@ -31,7 +30,7 @@ func (repo *AccountsRepoMock) ActivateUserAccount(email, token string) error {
 
 		actualToken, err := xid.FromString(repo.userAccount[i].ActivationToken)
 		if err != nil {
-			return errors.New("internal error: the token of the user is not valid")
+			return fmt.Errorf("internal error: the token of the user is not valid: %v", err)
 		}
 
 		if actualToken.Compare(xidToken) == 0 {
@@ -40,7 +39,7 @@ func (repo *AccountsRepoMock) ActivateUserAccount(email, token string) error {
 		}
 	}
 
-	return errors.New("account with the provided email address not found")
+	return ErrTokenNotFound
 }
 
 func (repo *AccountsRepoMock) UpdateUser(userID int64, input *UpdateUserInput) (bool, error) {
@@ -53,23 +52,22 @@ func (repo *AccountsRepoMock) UpdateUser(userID int64, input *UpdateUserInput) (
 			continue
 		}
 
-		switch {
-		case input.ActivationToken != nil:
+		if input.ActivationToken != nil {
 			repo.userAccount[i].ActivationToken = *input.ActivationToken
-			fallthrough
-		case input.IsActive != nil:
+		}
+		if input.IsActive != nil {
 			repo.userAccount[i].IsActive = *input.IsActive
-			fallthrough
-		case input.LastName != nil:
+		}
+		if input.LastName != nil {
 			repo.userAccount[i].LastName = *input.LastName
-			fallthrough
-		case input.FirstName != nil:
+		}
+		if input.FirstName != nil {
 			repo.userAccount[i].FirstName = *input.FirstName
-			fallthrough
-		case input.Email != nil:
+		}
+		if input.Email != nil {
 			repo.userAccount[i].Email = *input.Email
-			fallthrough
-		case input.Password != nil:
+		}
+		if input.Password != nil {
 			passhash, err := cryptoutils.Argon2Hash(*input.Password)
 			if err != nil {
 				return false, fmt.Errorf("unable to generate passhash: %v", err)
@@ -80,7 +78,7 @@ func (repo *AccountsRepoMock) UpdateUser(userID int64, input *UpdateUserInput) (
 		return true, nil
 	}
 
-	return false, errors.New("user account not found")
+	return false, ErrUserAccountNotFound
 }
 
 func (repo *AccountsRepoMock) SaveNewUser(ua models.UserAccount, password string) (*models.UserAccount, error) {
@@ -106,9 +104,6 @@ func (repo *AccountsRepoMock) SaveNewUser(ua models.UserAccount, password string
 func (repo *AccountsRepoMock) GetUserByEmailAndPassword(email, password string) (*models.UserAccount, error) {
 	for _, ua := range repo.userAccount {
 		if ua.Email == email {
-			if !ua.IsActive {
-				return nil, ErrUserAccountNotFound
-			}
 			if err := cryptoutils.Argon2Verify(password, ua.Passhash); err != nil {
 				break
 			}

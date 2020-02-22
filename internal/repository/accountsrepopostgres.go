@@ -101,7 +101,7 @@ func (repo AccountsRepositoryPostgres) UpdateUser(userID int64, input *UpdateUse
 		return false, err
 	}
 	if n == 0 {
-		return false, nil
+		return false, ErrUserAccountNotFound
 	}
 
 	return true, nil
