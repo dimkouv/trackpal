@@ -12,47 +12,59 @@ import (
 
 func (ts TrackpalServer) getDevices(w http.ResponseWriter, req *http.Request) {
 	b, err := ts.trackingService.GetDevicesAsJSON(req.Context())
+	terr, isTerr := err.(terror.Terror)
 
-	switch err {
-	case nil:
+	switch {
+	case err == nil:
 		response.HTTP(w).Data(b).Status(http.StatusOK).JSON()
+	case !isTerr:
+		response.HTTP(w).Status(http.StatusInternalServerError).TEXT()
 	default:
-		response.HTTP(w).Error(err).Status(http.StatusBadRequest).JSON()
+		response.HTTP(w).Status(terr.Code()).Error(terr).JSON()
 	}
 }
 
 func (ts TrackpalServer) createDevice(w http.ResponseWriter, req *http.Request) {
 	b, err := ts.trackingService.SaveDevice(req.Context(), req.Body)
+	terr, isTerr := err.(terror.Terror)
 
-	switch err {
-	case nil:
+	switch {
+	case err == nil:
 		response.HTTP(w).Data(b).Status(http.StatusCreated).JSON()
+	case !isTerr:
+		response.HTTP(w).Status(http.StatusInternalServerError).TEXT()
 	default:
-		response.HTTP(w).Error(err).Status(http.StatusBadRequest).JSON()
+		response.HTTP(w).Status(terr.Code()).Error(terr).JSON()
 	}
 }
 
 func (ts TrackpalServer) getTrackRecordsOfDevice(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	b, err := ts.trackingService.GetAllTrackInputsOfDeviceAsJSON(req.Context(), vars)
+	terr, isTerr := err.(terror.Terror)
 
-	switch err {
-	case nil:
+	switch {
+	case err == nil:
 		response.HTTP(w).Data(b).Status(http.StatusOK).JSON()
+	case !isTerr:
+		response.HTTP(w).Status(http.StatusInternalServerError).TEXT()
 	default:
-		response.HTTP(w).Error(err).Status(http.StatusBadRequest).JSON()
+		response.HTTP(w).Status(terr.Code()).Error(terr).JSON()
 	}
 }
 
 func (ts TrackpalServer) addTrackRecordOfDevice(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	b, err := ts.trackingService.SaveTrackInput(req.Context(), vars, req.Body)
+	terr, isTerr := err.(terror.Terror)
 
-	switch err {
-	case nil:
+	switch {
+	case err == nil:
 		response.HTTP(w).Data(b).Status(http.StatusCreated).JSON()
+	case !isTerr:
+		response.HTTP(w).Status(http.StatusInternalServerError).TEXT()
 	default:
-		response.HTTP(w).Error(err).Status(http.StatusBadRequest).JSON()
+		response.HTTP(w).Status(terr.Code()).Error(terr).JSON()
 	}
 }
 

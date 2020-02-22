@@ -57,7 +57,7 @@ func (ts TrackpalServer) trackingRoutes() []Route {
 			Name:        "getTrackingDeviceRecords",
 		},
 		{
-			Pattern:     "tracking//devices/{deviceID:[0-9]+}/records",
+			Pattern:     "/tracking/devices/{deviceID:[0-9]+}/records",
 			HandlerFunc: ts.withUser(ts.addTrackRecordOfDevice),
 			Method:      "POST",
 			Name:        "postTrackingDeviceRecord",
@@ -72,6 +72,14 @@ func (ts TrackpalServer) RegisterRoutes() *mux.Router {
 	ts.routes = append(ts.routes, ts.trackingRoutes()...)
 
 	router := mux.NewRouter().StrictSlash(true)
+	router.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// fmt.Printf("OPTIONS")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, Access-Control-Request-Headers, Access-Control-Request-Method, Connection, Host, Origin, User-Agent, Referer, Cache-Control, X-header")
+		w.WriteHeader(http.StatusNoContent)
+	})
+
 	for _, route := range ts.routes {
 		router.
 			Methods(route.Method).

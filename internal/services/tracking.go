@@ -28,7 +28,7 @@ func (service TrackingService) GetDevicesAsJSON(ctx context.Context) ([]byte, er
 		logrus.
 			WithField(consts.LogFieldErr, err).
 			Errorf("error getting devices")
-		return nil, err
+		return nil, consts.ErrEnumInternal
 	}
 
 	b, err := json.Marshal(results)
@@ -36,7 +36,7 @@ func (service TrackingService) GetDevicesAsJSON(ctx context.Context) ([]byte, er
 		logrus.
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to marshal results")
-		return nil, err
+		return nil, consts.ErrEnumInternal
 	}
 
 	return b, nil
@@ -48,7 +48,7 @@ func (service TrackingService) SaveDevice(ctx context.Context, rc io.Reader) ([]
 		logrus.
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to read request body")
-		return nil, err
+		return nil, consts.ErrEnumInvalidBody
 	}
 
 	d := models.Device{}
@@ -58,8 +58,7 @@ func (service TrackingService) SaveDevice(ctx context.Context, rc io.Reader) ([]
 			WithField(consts.LogFieldBody, fmt.Sprintf("%s", requestData)).
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to parse request body")
-
-		return nil, err
+		return nil, consts.ErrEnumInvalidBody
 	}
 
 	err = d.Validate()
@@ -68,7 +67,7 @@ func (service TrackingService) SaveDevice(ctx context.Context, rc io.Reader) ([]
 			WithField(consts.LogFieldBody, fmt.Sprintf("%s", requestData)).
 			WithField(consts.LogFieldErr, err).
 			Errorf("the provided device is not valid")
-		return nil, err
+		return nil, consts.ErrEnumInvalidData
 	}
 
 	ua := ctx.Value(consts.CtxUser).(models.UserAccount)
@@ -78,7 +77,7 @@ func (service TrackingService) SaveDevice(ctx context.Context, rc io.Reader) ([]
 		logrus.
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to save new device")
-		return nil, err
+		return nil, consts.ErrEnumInternal
 	}
 
 	b, err := json.Marshal(device)
@@ -86,7 +85,7 @@ func (service TrackingService) SaveDevice(ctx context.Context, rc io.Reader) ([]
 		logrus.
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to marshal device")
-		return nil, err
+		return nil, consts.ErrEnumInternal
 	}
 
 	return b, nil
@@ -99,7 +98,7 @@ func (service TrackingService) SaveTrackInput(
 		logrus.
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to read request body")
-		return nil, err
+		return nil, consts.ErrEnumInvalidBody
 	}
 
 	deviceID, err := strconv.Atoi(vars["deviceID"])
@@ -108,7 +107,7 @@ func (service TrackingService) SaveTrackInput(
 			WithField(consts.LogFieldVars, vars).
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to parse deviceID")
-		return nil, err
+		return nil, consts.ErrEnumInvalidVars
 	}
 
 	device, err := service.repo.GetDeviceByID(int64(deviceID))
@@ -116,7 +115,7 @@ func (service TrackingService) SaveTrackInput(
 		logrus.
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to get device by id")
-		return nil, err
+		return nil, consts.ErrEnumNotFound
 	}
 
 	ua := ctx.Value(consts.CtxUser).(models.UserAccount)
@@ -125,7 +124,7 @@ func (service TrackingService) SaveTrackInput(
 			WithField("user_id", ua.ID).
 			WithField("device_owner", device.UserID).
 			Errorf("unauthorized to save track input")
-		return nil, err
+		return nil, consts.ErrEnumNotFound
 	}
 
 	t := models.TrackInput{}
@@ -135,13 +134,13 @@ func (service TrackingService) SaveTrackInput(
 			WithField(consts.LogFieldBody, fmt.Sprintf("%s", requestData)).
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to parse request body")
-		return nil, err
+		return nil, consts.ErrEnumInvalidBody
 	}
 	t.DeviceID = int64(deviceID)
 
 	ti, err := service.repo.SaveNewTrackInput(t)
 	if err != nil {
-		return nil, err
+		return nil, consts.ErrEnumInternal
 	}
 
 	b, err := json.Marshal(ti)
@@ -149,7 +148,7 @@ func (service TrackingService) SaveTrackInput(
 		logrus.
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to marshal track input")
-		return nil, err
+		return nil, consts.ErrEnumInternal
 	}
 
 	return b, nil
@@ -163,7 +162,7 @@ func (service TrackingService) GetAllTrackInputsOfDeviceAsJSON(
 			WithField(consts.LogFieldVars, vars).
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to parse deviceID")
-		return nil, err
+		return nil, consts.ErrEnumInvalidVars
 	}
 
 	device, err := service.repo.GetDeviceByID(int64(deviceID))
@@ -171,7 +170,7 @@ func (service TrackingService) GetAllTrackInputsOfDeviceAsJSON(
 		logrus.
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to get device by id")
-		return nil, err
+		return nil, consts.ErrEnumNotFound
 	}
 
 	ua := ctx.Value(consts.CtxUser).(models.UserAccount)
@@ -180,7 +179,7 @@ func (service TrackingService) GetAllTrackInputsOfDeviceAsJSON(
 			WithField("user_id", ua.ID).
 			WithField("device_owner", device.UserID).
 			Errorf("unauthorized to get track inputs of that device")
-		return nil, err
+		return nil, consts.ErrEnumNotFound
 	}
 
 	results, err := service.repo.GetAllTrackInputsOfDevice(int64(deviceID))
@@ -188,7 +187,7 @@ func (service TrackingService) GetAllTrackInputsOfDeviceAsJSON(
 		logrus.
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to get track inputs of device")
-		return nil, err
+		return nil, consts.ErrEnumInternal
 	}
 
 	b, err := json.Marshal(results)
@@ -196,7 +195,7 @@ func (service TrackingService) GetAllTrackInputsOfDeviceAsJSON(
 		logrus.
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to marshal track input")
-		return nil, err
+		return nil, consts.ErrEnumInternal
 	}
 
 	return b, nil

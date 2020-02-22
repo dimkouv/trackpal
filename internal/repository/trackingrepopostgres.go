@@ -19,7 +19,7 @@ type TrackingRepositoryPostgres struct {
 func (t TrackingRepositoryPostgres) GetDeviceByID(deviceID int64) (*models.Device, error) {
 	var device models.Device
 
-	const sqlQuery = `select id, name, created_at from device where id=$1`
+	const sqlQuery = `select id, name, created_at, user_id from device where id=$1`
 	err := t.db.Get(&device, sqlQuery, deviceID)
 	if err != nil {
 		pqErr, isPqErr := err.(*pq.Error)
@@ -56,7 +56,7 @@ func (t TrackingRepositoryPostgres) SaveNewTrackInput(trackInput models.TrackInp
 }
 
 func (t TrackingRepositoryPostgres) GetAllTrackInputsOfDevice(deviceID int64) ([]models.TrackInput, error) {
-	var trackInputs []models.TrackInput
+	trackInputs := make([]models.TrackInput, 0)
 
 	const sqlQueryDeviceExists = `select exists(select 1 from device where id=$1)`
 	exists := false

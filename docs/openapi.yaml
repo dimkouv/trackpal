@@ -213,7 +213,7 @@ paths:
                 properties:
                   error:
                     type: string
-                    enum: [INVALID_BODY, INVALID_NAME]
+                    enum: [INVALID_BODY, INVALID_DATA]
         '401':
           description: Unauthorized
         '500':
@@ -243,6 +243,16 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/TrackingDeviceRecord'
+        '400':
+          description: Something bad happened
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum: [INVALID_VARS]
         '404':
           description: The device was not found (or not owned by you)
         '401':
@@ -286,7 +296,7 @@ paths:
                 properties:
                   error:
                     type: string
-                    enum: [INVALID_BODY, INVALID_INPUT]
+                    enum: [INVALID_BODY, INVALID_INPUT, INVALID_VARS]
         '404':
           description: The device was not found (or not owned by you)
         '401':

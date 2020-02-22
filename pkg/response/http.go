@@ -9,7 +9,7 @@ import (
 )
 
 type errResponseData struct {
-	Msg string `json:"msg"`
+	Error string `json:"error"`
 }
 
 func (errResp errResponseData) json() []byte {
@@ -58,7 +58,7 @@ func (r *Response) compile() {
 	r.w.WriteHeader(r.status)
 
 	if r.err != nil {
-		r.data = errResponseData{Msg: r.err.Error()}.json()
+		r.data = errResponseData{Error: r.err.Error()}.json()
 	}
 
 	if _, err := r.w.Write(r.data); err != nil {

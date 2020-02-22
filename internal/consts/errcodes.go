@@ -12,6 +12,8 @@ const (
 var (
 	ErrEnumAccountExists    = terror.New(400, "ACCOUNT_EXISTS")
 	ErrEnumInvalidBody      = terror.New(400, "INVALID_BODY")
+	ErrEnumInvalidData      = terror.New(400, "INVALID_DATA")
+	ErrEnumInvalidVars      = terror.New(400, "INVALID_VARS")
 	ErrEnumInvalidEmail     = terror.New(400, "INVALID_EMAIL")
 	ErrEnumInsecurePassword = terror.New(400, "INSECURE_PASSWORD")
 	ErrEnumNotActivated     = terror.New(400, "NOT_ACTIVATED")
