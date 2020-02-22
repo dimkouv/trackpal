@@ -5,20 +5,16 @@ jobs:
   test:
     env:
       POSTGRES_USER: master
-      PGPASSWORD: masterkey
+      POSTGRES_PASSWORD: masterkey
       POSTGRES_DB: trackpal
       POSTGRES_DSN: "user=master password=masterkey dbname=trackpal sslmode=disable"
 
     services:
       postgres:
         image: postgres:10.8
-        env:
-          POSTGRES_USER: master
-          POSTGRES_PASSWORD: masterkey
-          POSTGRES_DB: trackpal
         ports:
           - 5432:5432
-        # needed because the postgres container does not provide a healthcheck
+        # required since postgres container does not provide any health checks
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
     name: Test
