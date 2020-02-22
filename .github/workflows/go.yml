@@ -3,6 +3,12 @@ on: [push]
 jobs:
 
   test:
+    env:
+      POSTGRES_USER: master
+      PGPASSWORD: masterkey
+      POSTGRES_DB: trackpal
+      POSTGRES_DSN: "user=master password=masterkey dbname=trackpal sslmode=disable"
+
     services:
       postgres:
         image: postgres:10.8
@@ -42,11 +48,6 @@ jobs:
       run: make unit_test
 
     - name: Integration test
-      env:
-        POSTGRES_USER: master
-        PGPASSWORD: masterkey
-        POSTGRES_DB: trackpal
-        POSTGRES_DSN: "user=master password=masterkey dbname=trackpal sslmode=disable"
       run: |
         psql -h 127.0.0.1 -U ${POSTGRES_USER} -d ${POSTGRES_DB} <<< $(cat migrations/*.sql)
         make integration_test
