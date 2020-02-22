@@ -11,14 +11,16 @@ integration_test: ## Perform integration testing (requires env: POSTGRES_DSN)
 	go test --tags="integration_test" ./...
 
 .PHONY: coverage
-coverage_file="/tmp/go-cover.$$.tmp"
-coverage: ## Creates a test coverage report
-	go test --tags="unit_test" -coverprofile=$coverage_file ./... && go tool cover -html=$coverage_file && unlink $coverage_file
+coverage_file=./output/coverage.cov
+coverage: ## Creates a test coverage report (unit tests)
+	mkdir -p output
+	go test --tags="unit_test" -coverprofile=$coverage_file ./... && go tool cover -func=$coverage_file
 
 .PHONY: coverage_full
-coverage_file=/tmp/go-cover-trackpal.tmp
+coverage_file=./output/coverage.cov
 coverage_full: ## Creates a test coverage report (requires env: POSTGRES_DSN)
-	go test --tags="unit_test integration_test" -coverprofile=${coverage_file} ./... && go tool cover -html=${coverage_file} && unlink ${coverage_file}
+	mkdir -p output
+	go test --tags="unit_test integration_test" -coverprofile=${coverage_file} ./... && go tool cover -func=${coverage_file}
 
 .PHONY: build
 build: ## Compiles the server

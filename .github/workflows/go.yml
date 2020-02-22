@@ -52,3 +52,12 @@ jobs:
       run: |
         psql -h 127.0.0.1 -U ${POSTGRES_USER} -d ${POSTGRES_DB} <<< $(cat migrations/*.sql)
         make integration_test
+
+    - name: Coverage
+      run: |
+        make coverage_full
+    - uses: actions/checkout@master
+    - uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }} #required
+        file: ./output/coverage.cov #optional
