@@ -7,13 +7,13 @@ import (
 )
 
 func TestGetEnvOrDefault(t *testing.T) {
-	assert.NotEmpty(t, GetEnvOrDefault("GOPATH", "default val"))
+	assert.NotEmpty(t, GetEnvOrDefault("USER", "default val"))
 	assert.Equal(t, "default val", GetEnvOrDefault("AN_INVALID_ENV_VAR", "default val"))
 }
 
 func TestGetEnvOrPanic(t *testing.T) {
-	t.Run("should not panic of the env var exists", func(t *testing.T) {
-		assert.NotEmpty(t, GetEnvOrPanic("GOPATH"))
+	t.Run("should not panic if the env var exists", func(t *testing.T) {
+		assert.NotEmpty(t, GetEnvOrPanic("USER"))
 	})
 
 	t.Run("should raise panic if the env var does not exist", func(t *testing.T) {

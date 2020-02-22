@@ -11,6 +11,10 @@ import (
 	"github.com/dimkouv/trackpal/internal/conf"
 )
 
+var (
+	ErrJWTTokenExpired = errors.New("the authentication token has expired")
+)
+
 type UserAccount struct {
 	ID              int64  `json:"id" db:"id"`
 	Email           string `json:"email" db:"email"`
@@ -55,7 +59,7 @@ func (ua *UserAccount) FromJWT(tokenString string) (*UserAccount, error) {
 			return nil, err
 		}
 		if createdAtUTC.Before(time.Now().UTC().Add(-5 * time.Minute)) {
-			return nil, errors.New("token has expired")
+			return nil, ErrJWTTokenExpired
 		}
 
 		ua.Email = claims["email"].(string)

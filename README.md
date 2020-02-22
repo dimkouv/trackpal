@@ -1,26 +1,55 @@
 # Trackpal
-![Go](https://github.com/dimkouv/trackpal/workflows/Go/badge.svg)
+![Trackpal](https://github.com/dimkouv/trackpal/workflows/Trackpal/badge.svg)
 [![codecov](https://codecov.io/gh/dimkouv/trackpal/branch/master/graph/badge.svg?token=ME0PITX2FL)](https://codecov.io/gh/dimkouv/trackpal)
 
-A location tracking application
+
+A location tracking application.
 
 
 ## Quickstart
 
 This application consists of a RESTful API that is capable
-of logging a stream of coordinates and then exposing them
-in order to track the things you love (vehicles, people, ...).
+of logging a stream of coordinates and then exposing them in 
+order to track and get alerted when the things you love (vehicles, people, ...)
+are moving while they're supposed not to. Client implementations are not ready yet.
 
+Check `make help` for available commands.
 
 ## Architecture
 
 Initially we're starting with a simple approach. The server is
-written in Go and Postgres will be our database.
+written in Go, Postgres will serve as our database and http will be handled by a `net/http` server .
+
+We have an approach with 3 layers (server, service, repository). The repositories
+are responsible for storage operations, services are using the repositories
+and contain all business logic, server uses services to serve http requests.
+
+This approach helps us easily update the storage (e.g. replace postgres with mysql <*not*>),
+allows to create mock storage implementation for fast unit tests. The server is separated from the
+business logic in order to make it easy for adapting to new standards, for example replace net/http
+ with lambdas or grpc.
+
+
+```text
+internal/server  -->  internal/services  -->  internal/repository
+                      |                       |
+                      | model_service.go      | model.go          (iface)   
+                                              | model_mock.go     (mock impl)
+                                              | model_postgres.go (pg impl)
+                                              | model_redis.go    (redis impl)
+
+
+- inits services      - returns enum errors   - returns repo errors
+- http handlers       - returns bytes         - returns models
+- routes              - repo errors logging   - no logging
+```
 
 
 ## Tools & Dependencies
 
-golangci-lint
+### golangci-lint
+
+Install golangci-lint in order to be able to run `make lint`
 
 ```bash
 if ! [ -x "$(command -v golangci-lint)" ]; then
@@ -30,14 +59,9 @@ fi
 ```
 
 
-docsify
+### postgres
 
-```bash
-npm i docsify-cli -g
-```
-
-
-postgres
+You can run postgres locally with docker.
 
 ```bash
 docker run --name postgres-local \
@@ -46,3 +70,6 @@ docker run --name postgres-local \
     -e POSTGRES_PASSWORD=masterkey \
     -p 5432:5432 -d postgres
 ```
+
+After restarting your system, you can start 
+the instance with `docker start postgres-local`

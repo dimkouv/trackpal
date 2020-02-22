@@ -4,11 +4,12 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/dimkouv/trackpal/internal/consts"
-	"github.com/dimkouv/trackpal/internal/models"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/sirupsen/logrus"
+
+	"github.com/dimkouv/trackpal/internal/consts"
+	"github.com/dimkouv/trackpal/internal/models"
 )
 
 type TrackingRepositoryPostgres struct {
@@ -18,7 +19,7 @@ type TrackingRepositoryPostgres struct {
 func (t TrackingRepositoryPostgres) GetDeviceByID(deviceID int64) (*models.Device, error) {
 	var device models.Device
 
-	const sqlQuery = `select id, name, created_at from device where id=$1`
+	const sqlQuery = `select id, name, created_at, user_id from device where id=$1`
 	err := t.db.Get(&device, sqlQuery, deviceID)
 	if err != nil {
 		pqErr, isPqErr := err.(*pq.Error)
@@ -55,7 +56,7 @@ func (t TrackingRepositoryPostgres) SaveNewTrackInput(trackInput models.TrackInp
 }
 
 func (t TrackingRepositoryPostgres) GetAllTrackInputsOfDevice(deviceID int64) ([]models.TrackInput, error) {
-	var trackInputs []models.TrackInput
+	trackInputs := make([]models.TrackInput, 0)
 
 	const sqlQueryDeviceExists = `select exists(select 1 from device where id=$1)`
 	exists := false
@@ -111,7 +112,9 @@ func NewTrackingRepositoryPostgres(postgresDSN string) (*TrackingRepositoryPostg
 			Error("unable to connect to postgres")
 		return nil, err
 	}
-	logrus.Info("postgres connection success")
+	logrus.
+		WithField(consts.LogFieldRepo, "tracking_repository_postgres").
+		Info("postgres connection success")
 
 	return &TrackingRepositoryPostgres{db: db}, nil
 }

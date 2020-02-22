@@ -1,5 +1,25 @@
 package consts
 
+import (
+	"github.com/dimkouv/trackpal/pkg/terror"
+)
+
 const (
 	PQCodeForeignKeyViolation = "23503"
+	PQCodeUniqueKeyViolation  = "23505"
+)
+
+var (
+	ErrEnumAccountExists    = terror.New(400, "ACCOUNT_EXISTS")
+	ErrEnumInvalidBody      = terror.New(400, "INVALID_BODY")
+	ErrEnumInvalidData      = terror.New(400, "INVALID_DATA")
+	ErrEnumInvalidVars      = terror.New(400, "INVALID_VARS")
+	ErrEnumInvalidEmail     = terror.New(400, "INVALID_EMAIL")
+	ErrEnumInsecurePassword = terror.New(400, "INSECURE_PASSWORD")
+	ErrEnumNotActivated     = terror.New(400, "NOT_ACTIVATED")
+	ErrEnumNotFound         = terror.New(404, "NOT_FOUND")
+	ErrEnumInternal         = terror.New(500, "INTERNAL_ERROR")
+	ErrEnumUnauthorized     = terror.New(401, "UNAUTHORIZED")
+	ErrEnumTokenExpired     = terror.New(400, "TOKEN_EXPIRED")
+	ErrEnumGenericError     = terror.New(400, "GENERIC_ERROR")
 )

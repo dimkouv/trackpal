@@ -55,5 +55,5 @@ func TestResponse_Error(t *testing.T) {
 	err := errors.New("just an error")
 	resp := HTTP(w).Data([]byte("hello")).Error(err).Data([]byte("hello"))
 	resp.JSON()
-	assert.Equal(t, `{"msg":"`+err.Error()+`"}`, string(resp.data))
+	assert.Equal(t, `{"error":"`+err.Error()+`"}`, string(resp.data))
 }

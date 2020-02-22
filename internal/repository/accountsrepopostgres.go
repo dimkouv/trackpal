@@ -1,20 +1,20 @@
 package repository
 
 import (
-	"errors"
+	"database/sql"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
+	"github.com/rs/xid"
+	"github.com/sirupsen/logrus"
+
 	"github.com/dimkouv/trackpal/internal/consts"
 	"github.com/dimkouv/trackpal/internal/models"
 	"github.com/dimkouv/trackpal/pkg/cryptoutils"
-	"github.com/jmoiron/sqlx"
-	"github.com/rs/xid"
-	"github.com/sirupsen/logrus"
 )
-
-const repoName = "accounts_repository_postgres"
 
 type AccountsRepositoryPostgres struct {
 	db *sqlx.DB
@@ -26,7 +26,7 @@ func (repo AccountsRepositoryPostgres) ActivateUserAccount(email, token string) 
 		return err
 	}
 	if xidToken.Time().Before(time.Now().UTC().Add(-10 * time.Minute)) {
-		return errors.New("your token has expired")
+		return ErrTokenExpired
 	}
 
 	q := `update user_account set is_active=true where email=$1 and activation_token=$2`
@@ -38,9 +38,8 @@ func (repo AccountsRepositoryPostgres) ActivateUserAccount(email, token string) 
 	n, err := res.RowsAffected()
 	if err != nil {
 		return err
-	}
-	if n == 0 {
-		return errors.New("account with the provided email address not found")
+	} else if n == 0 {
+		return ErrTokenNotFound
 	}
 
 	return nil
@@ -102,7 +101,7 @@ func (repo AccountsRepositoryPostgres) UpdateUser(userID int64, input *UpdateUse
 		return false, err
 	}
 	if n == 0 {
-		return false, nil
+		return false, ErrUserAccountNotFound
 	}
 
 	return true, nil
@@ -124,6 +123,10 @@ func (repo AccountsRepositoryPostgres) SaveNewUser(
 	err = repo.db.QueryRow(sqlQuery, ua.Email, ua.Passhash, ua.FirstName, ua.LastName, ua.IsActive, ua.ActivationToken).
 		Scan(&ua.ID)
 	if err != nil {
+		pqErr, isPqErr := err.(*pq.Error)
+		if isPqErr && pqErr.Code == consts.PQCodeUniqueKeyViolation {
+			return nil, ErrAccountExists
+		}
 		return nil, err
 	}
 
@@ -134,13 +137,13 @@ func (repo AccountsRepositoryPostgres) GetUserByEmailAndPassword(email, password
 	ua := models.UserAccount{}
 	const sqlQuery = `select id, email, passhash, first_name, last_name, is_active, activation_token from` +
 		` user_account where email=$1`
+
 	err := repo.db.Get(&ua, sqlQuery, email)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrUserAccountNotFound
+		}
 		return nil, err
-	}
-
-	if !ua.IsActive {
-		return nil, errors.New("account is not active")
 	}
 
 	err = cryptoutils.Argon2Verify(password, ua.Passhash)
@@ -148,11 +151,12 @@ func (repo AccountsRepositoryPostgres) GetUserByEmailAndPassword(email, password
 	case nil:
 		return &ua, nil
 	default:
-		return nil, errors.New("user account not found")
+		return nil, ErrUserAccountNotFound
 	}
 }
 
 func NewAccountsRepositoryPostgres(postgresDSN string) (*AccountsRepositoryPostgres, error) {
+	repoName := "accounts_repository_postgres"
 	db, err := sqlx.Connect("postgres", postgresDSN)
 
 	logrus.

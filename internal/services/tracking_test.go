@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dimkouv/trackpal/pkg/terror"
+	"github.com/dimkouv/trackpal/internal/consts"
 
 	"github.com/dimkouv/trackpal/internal/models"
 
@@ -24,7 +24,7 @@ func TestTrackingService_GetDevicesAsJSON(t *testing.T) {
 	devices := make([]models.Device, 0)
 
 	t.Run("if no devices exist a null response is received", func(t *testing.T) {
-		b, err := server.GetDevicesAsJSON(context.WithValue(context.Background(), "user", models.UserAccount{}))
+		b, err := server.GetDevicesAsJSON(context.WithValue(context.Background(), consts.CtxUser, models.UserAccount{}))
 		assert.NoError(t, err)
 		err = json.Unmarshal(b, &devices)
 		assert.NoError(t, err)
@@ -40,7 +40,7 @@ func TestTrackingService_GetDevicesAsJSON(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		b, err := server.GetDevicesAsJSON(context.WithValue(context.Background(), "user", models.UserAccount{}))
+		b, err := server.GetDevicesAsJSON(context.WithValue(context.Background(), consts.CtxUser, models.UserAccount{}))
 		assert.NoError(t, err)
 
 		err = json.Unmarshal(b, &devices)
@@ -59,7 +59,10 @@ func TestTrackingService_SaveDevice(t *testing.T) {
 	t.Run("should save and repond with the model succesfully", func(t *testing.T) {
 		deviceAsJSON, err := json.Marshal(models.Device{Name: "my cool device"})
 		assert.NoError(t, err)
-		deviceAsJSON, err = server.SaveDevice(context.WithValue(context.Background(), "user", models.UserAccount{}), bytes.NewBufferString(string(deviceAsJSON)))
+		deviceAsJSON, err = server.SaveDevice(
+			context.WithValue(context.Background(), consts.CtxUser, models.UserAccount{}),
+			bytes.NewBufferString(string(deviceAsJSON)),
+		)
 		assert.NoError(t, err)
 		device := models.Device{}
 		err = json.Unmarshal(deviceAsJSON, &device)
@@ -73,11 +76,10 @@ func TestTrackingService_SaveDevice(t *testing.T) {
 
 	t.Run("should respond with ErrBodyRead", func(t *testing.T) {
 		_, err := server.SaveDevice(context.Background(), IoReaderErrAlways{})
-		terr := err.(terror.Terror)
-		assert.Equal(t, ErrBodyRead, terr.Code())
+		assert.Equal(t, consts.ErrEnumInvalidBody, err)
 	})
 
-	t.Run("should respond with ErrBodyParse", func(t *testing.T) {
+	t.Run("should respond invalid body error", func(t *testing.T) {
 		cases := []string{
 			"invalid json",
 			"",
@@ -85,12 +87,11 @@ func TestTrackingService_SaveDevice(t *testing.T) {
 
 		for _, c := range cases {
 			_, err := server.SaveDevice(context.Background(), bytes.NewBufferString(c))
-			terr := err.(terror.Terror)
-			assert.Equal(t, ErrBodyParse, terr.Code())
+			assert.Equal(t, consts.ErrEnumInvalidBody, err)
 		}
 	})
 
-	t.Run("should respond with ErrNotValid", func(t *testing.T) {
+	t.Run("should respond with not valid data error", func(t *testing.T) {
 		cases := []string{
 			`{"a": "b"}`,
 			`{"name": ""}`,
@@ -101,8 +102,7 @@ func TestTrackingService_SaveDevice(t *testing.T) {
 
 		for _, c := range cases {
 			_, err := server.SaveDevice(context.Background(), bytes.NewBufferString(c))
-			terr := err.(terror.Terror)
-			assert.Equal(t, ErrNotValid, terr.Code())
+			assert.Equal(t, consts.ErrEnumInvalidData, err)
 		}
 	})
 }

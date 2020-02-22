@@ -1,6 +1,10 @@
 package envlib
 
-import "os"
+import (
+	"os"
+
+	"github.com/sirupsen/logrus"
+)
 
 const EnvPostgresDSN = "POSTGRES_DSN"
 
@@ -15,6 +19,7 @@ func GetEnvOrPanic(envVarKey string) string {
 func GetEnvOrDefault(envVarKey, defaultVal string) string {
 	v := os.Getenv(envVarKey)
 	if v == "" {
+		logrus.Warnf("Environment variable with key='%s' not found. Fallback value='%s'", envVarKey, defaultVal)
 		return defaultVal
 	}
 	return v

@@ -2,13 +2,14 @@ package response
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/sirupsen/logrus"
 )
 
 type errResponseData struct {
-	Msg string `json:"msg"`
+	Error string `json:"error"`
 }
 
 func (errResp errResponseData) json() []byte {
@@ -38,6 +39,11 @@ func (r *Response) Error(err error) *Response {
 	return r
 }
 
+func (r *Response) ErrorStr(errStr string) *Response {
+	r.err = errors.New(errStr)
+	return r
+}
+
 func (r *Response) JSON() {
 	r.w.Header().Set("Content-Type", "application/json")
 	r.compile()
@@ -52,7 +58,7 @@ func (r *Response) compile() {
 	r.w.WriteHeader(r.status)
 
 	if r.err != nil {
-		r.data = errResponseData{Msg: r.err.Error()}.json()
+		r.data = errResponseData{Error: r.err.Error()}.json()
 	}
 
 	if _, err := r.w.Write(r.data); err != nil {
