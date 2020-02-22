@@ -1,5 +1,7 @@
 # Trackpal
 ![Go](https://github.com/dimkouv/trackpal/workflows/Go/badge.svg)
+[![codecov](https://codecov.io/gh/dimkouv/trackpal/branch/develop/graph/badge.svg?token=ME0PITX2FL)](https://codecov.io/gh/dimkouv/trackpal)
+
 
 A location tracking application.
 
