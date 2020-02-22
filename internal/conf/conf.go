@@ -24,4 +24,6 @@ var (
 		"TRACKPAL_SIGN_KEY",
 		"you-should-change-this-to-something-secure",
 	))
+
+	AccessControlAllowOrigin = "*"
 )

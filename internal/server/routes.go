@@ -5,6 +5,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
+
+	"github.com/dimkouv/trackpal/internal/conf"
 )
 
 func (ts TrackpalServer) authRoutes() []Route {
@@ -73,10 +75,11 @@ func (ts TrackpalServer) RegisterRoutes() *mux.Router {
 
 	router := mux.NewRouter().StrictSlash(true)
 	router.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// fmt.Printf("OPTIONS")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Origin", conf.AccessControlAllowOrigin)
 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, Access-Control-Request-Headers, Access-Control-Request-Method, Connection, Host, Origin, User-Agent, Referer, Cache-Control, X-header")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, "+
+			"Accept-Encoding, X-CSRF-Token, Authorization, Access-Control-Request-Headers, "+
+			"Access-Control-Request-Method, Connection, Host, Origin, User-Agent, Referer, Cache-Control, X-header")
 		w.WriteHeader(http.StatusNoContent)
 	})
 

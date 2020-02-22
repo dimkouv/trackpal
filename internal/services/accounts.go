@@ -72,7 +72,7 @@ func (s *UserAccountService) CreateUserAccount(_ context.Context, rc io.Reader) 
 		return consts.ErrEnumGenericError
 	}
 
-	// TODO: send it with email, sms, etc...
+	// TBD: send it with email, sms, etc...
 	logrus.Infof("user account created: activationToken=%v", createdUA.ActivationToken)
 	return nil
 }
