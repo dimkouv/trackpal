@@ -5,7 +5,7 @@ jobs:
   test:
     env:
       POSTGRES_USER: master
-      POSTGRES_PASSWORD: masterkey
+      PGPASSWORD: masterkey # required by pgsql
       POSTGRES_DB: trackpal
       POSTGRES_DSN: "user=master password=masterkey dbname=trackpal sslmode=disable"
 
