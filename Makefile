@@ -26,6 +26,10 @@ coverage_full: ## Creates a test coverage report (requires env: POSTGRES_DSN)
 build: ## Compiles the server
 	go build -o target/trackpal ./cmd/trackpal/...
 
+.PHONY: deploy
+deploy: ## Deploys the built artifacts
+	scp target/trackpal aws.trackpal:trackpal
+
 help: ## Displays this help screen
 	@grep -h -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "};\
 	 {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
