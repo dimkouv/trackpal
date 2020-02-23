@@ -28,7 +28,13 @@ build: ## Compiles the server
 
 .PHONY: deploy
 deploy: ## Deploys the built artifacts
-	scp target/trackpal aws.trackpal:trackpal
+	scp -r target aws.trackpal:trackpal
+	scp -r docs aws.trackpal:trackpal
+	ssh aws.trackpal "sudo systemctl stop trackpal; mv trackpal/target/trackpal trackpal/trackpal; sudo systemctl start trackpal"
+
+.PHONY: clean
+clean: ## Cleans generated artifacts
+	rm -rf target output
 
 help: ## Displays this help screen
 	@grep -h -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "};\

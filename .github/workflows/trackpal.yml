@@ -74,7 +74,7 @@ jobs:
       run: |
         make build
 
-    - name: Deploy (upload)
+    - name: Deploy (upload server)
       uses: appleboy/scp-action@master
       env:
         HOST: ${{ secrets.REMOTE_HOST }}
@@ -82,8 +82,19 @@ jobs:
         PORT: ${{ secrets.REMOTE_PORT }}
         KEY: ${{ secrets.SERVER_SSH_KEY }}
       with:
-        source: "target/trackpal"
-        target: "trackpal/trackpal-new"
+        source: "target"
+        target: "trackpal"
+
+    - name: Deploy (upload docs)
+      uses: appleboy/scp-action@master
+      env:
+        HOST: ${{ secrets.REMOTE_HOST }}
+        USERNAME: ${{ secrets.REMOTE_USER }}
+        PORT: ${{ secrets.REMOTE_PORT }}
+        KEY: ${{ secrets.SERVER_SSH_KEY }}
+      with:
+        source: "docs"
+        target: "trackpal"
 
     - name: Deploy (use new version)
       uses: appleboy/ssh-action@master
@@ -94,5 +105,5 @@ jobs:
         KEY: ${{ secrets.SERVER_SSH_KEY }}
         script: |
           sudo systemctl stop trackpal
-          mv trackpal/trackpal-new/target/trackpal trackpal/trackpal
+          mv trackpal/target/trackpal trackpal/trackpal
           sudo systemctl start trackpal
