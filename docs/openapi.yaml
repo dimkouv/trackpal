@@ -13,7 +13,7 @@ info:
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
 
 servers:
-  - url: https://api.trackpal.xyz/v1
+  - url: https://www.trackpal.xyz/api/v1
 
 tags:
   - name: Account
