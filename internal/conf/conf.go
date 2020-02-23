@@ -1,6 +1,10 @@
 package conf
 
-import "github.com/dimkouv/trackpal/internal/envlib"
+import (
+	"time"
+
+	"github.com/dimkouv/trackpal/internal/envlib"
+)
 
 type Argon2Conf struct {
 	Memory      uint32
@@ -26,4 +30,6 @@ var (
 	))
 
 	AccessControlAllowOrigin = "*"
+
+	JwtTTL = 5 * time.Minute
 )

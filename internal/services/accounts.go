@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"time"
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/dimkouv/trackpal/internal/conf"
 	"github.com/dimkouv/trackpal/internal/consts"
 	"github.com/dimkouv/trackpal/internal/models"
 	"github.com/dimkouv/trackpal/internal/repository"
@@ -157,7 +159,7 @@ func (s *UserAccountService) GetJWTFromEmailAndPassword(ctx context.Context, rc 
 		return nil, consts.ErrEnumNotActivated
 	}
 
-	tokenString, err := ua.GetJWT()
+	tokenString, err := ua.GetJWT(time.Now().UTC().Add(conf.JwtTTL))
 	if err != nil {
 		logrus.
 			WithField(consts.LogFieldErr, err).
@@ -175,7 +177,7 @@ func (s *UserAccountService) RefreshJWT(ctx context.Context) ([]byte, error) {
 		return nil, consts.ErrEnumUnauthorized
 	}
 
-	tokenString, err := ua.GetJWT()
+	tokenString, err := ua.GetJWT(time.Now().UTC().Add(conf.JwtTTL))
 	if err != nil {
 		logrus.
 			WithField(consts.LogFieldErr, err).

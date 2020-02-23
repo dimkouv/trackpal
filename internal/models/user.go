@@ -54,11 +54,11 @@ func (ua *UserAccount) FromJWT(tokenString string) (*UserAccount, error) {
 	if ok && token.Valid {
 		logrus.WithField("claims", claims).Debug(claims)
 
-		createdAtUTC, err := time.Parse("2006-01-02T15:04:05Z", claims["created_at"].(string))
+		expiresAtUTC, err := time.Parse("2006-01-02T15:04:05Z", claims["expires_at"].(string))
 		if err != nil {
 			return nil, err
 		}
-		if createdAtUTC.Before(time.Now().UTC().Add(-5 * time.Minute)) {
+		if time.Now().UTC().After(expiresAtUTC) {
 			return nil, ErrJWTTokenExpired
 		}
 
@@ -73,13 +73,13 @@ func (ua *UserAccount) FromJWT(tokenString string) (*UserAccount, error) {
 	return nil, errors.New("invalid token")
 }
 
-func (ua *UserAccount) GetJWT() (string, error) {
+func (ua *UserAccount) GetJWT(expiresAt time.Time) (string, error) {
 	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":         ua.ID,
 		"email":      ua.Email,
 		"first_name": ua.FirstName,
 		"last_name":  ua.LastName,
-		"created_at": time.Now().UTC(),
+		"expires_at": expiresAt,
 	})
 
 	tokStr, err := tok.SignedString(conf.JWTSignBytes)
