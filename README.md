@@ -15,6 +15,8 @@ are moving while they're supposed not to. Client implementations are not ready y
 
 Check `make help` for available commands.
 
+API Documentation: https://trackpal.xyz/api/v1/docs
+
 ## Architecture
 
 Initially we're starting with a simple approach. The server is

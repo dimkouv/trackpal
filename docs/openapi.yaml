@@ -1,9 +1,8 @@
 openapi: '3.0.2'
 info:
   description: >-
-    This is the API documentation for Trackpal. You can find the source code of
-    this RESTful API and/or open a PR
-    [here](https://github.com/dimkouv/trackpal).
+    This is the API documentation of Trackpal, a location tracking and alerting solution. You can find the source code
+    and/or open a PR [here](https://github.com/dimkouv/trackpal).
   version: 1.0.0
   title: Trackpal
   contact:
@@ -17,9 +16,11 @@ servers:
 
 tags:
   - name: Account
-    description: Everything about your user account
+    description: Everything about your user account. You have to create a user account in order to use the API.
   - name: Tracking
     description: Everything about location tracking
+  - name: Alerting
+    description: Everything about your device alerts
 
 paths:
   /auth/register:
@@ -28,8 +29,8 @@ paths:
         - Account
       summary: Register a new user account
       description: >-
-        Upon success, you will receive a confirmation email. The link will be
-        valid for a limited number of minutes.
+        An endpoint that allows you to create a new user account. Upon success, you will receive
+        a confirmation email. The link will be valid for 10 minutes.
       operationId: authRegister
       requestBody:
         required: true
@@ -59,7 +60,8 @@ paths:
         - Account
       summary: Login
       description: >-
-        Get a jwt token that can be used for authenticated requests. This token expires after 10 minutes.
+        Get a jwt token that can be used for authenticated requests. This token expires after 5 minutes, in order
+        to refresh it before it gets expired you can use the 'Token refresh' endpoint.
       operationId: authLogin
       requestBody:
         required: true
@@ -104,7 +106,8 @@ paths:
         - Account
       summary: Token refresh
       description: >-
-        Refresh your jwt token. Responds with a new token.
+        When you logged in you received an expiring token. Use this endpoint to refresh your token before it expires.
+        This endpoint responds with a new token.
       operationId: authRefresh
       responses:
         '200':
@@ -135,8 +138,8 @@ paths:
         - Account
       summary: Activate your account
       description: >-
-        After registration you received a token. Use this token to activate your account. Note that this
-        token expires after some minutes.
+        After registration you received a token in your email address. Use this token to activate your account.
+        Note that this token expires after 10 minutes (TODO: Allow resending a new token).
       operationId: authActivate
       requestBody:
         required: true
@@ -168,7 +171,8 @@ paths:
         - Tracking
       summary: Get all your tracking devices
       description: >-
-        Fetch a short overview of all your tracking devices.
+        Under your user account you have a list of tracking devices. This endpoint fetches a list of their short
+        overviews.
       operationId: getTrackingDevices
       responses:
         '200':

@@ -6,6 +6,7 @@ import (
 
 	"github.com/rs/xid"
 
+	"github.com/dimkouv/trackpal/internal/conf"
 	"github.com/dimkouv/trackpal/internal/models"
 	"github.com/dimkouv/trackpal/pkg/cryptoutils"
 )
@@ -19,7 +20,7 @@ func (repo *AccountsRepoMock) ActivateUserAccount(email, token string) error {
 	if err != nil {
 		return err
 	}
-	if xidToken.Time().Before(time.Now().UTC().Add(-10 * time.Minute)) {
+	if xidToken.Time().Before(time.Now().UTC().Add(-conf.ActivationTokenTTL)) {
 		return ErrTokenExpired
 	}
 

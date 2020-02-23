@@ -32,7 +32,10 @@ var (
 	AccessControlAllowOrigin = "*"
 
 	// JwtTTL After this duration passes JWTs are expired
-	JwtTTL = 5 * time.Minute
+	JwtTTL = 5 * time.Minute // Note: update openapi docs on change
+
+	// ActivationTokenTTL after this duration passes activation tokens are expired
+	ActivationTokenTTL = 10 * time.Minute // Note: update openapi doc on change
 )
 
 // nolint: gochecknoglobals

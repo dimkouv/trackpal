@@ -11,6 +11,7 @@ import (
 	"github.com/rs/xid"
 	"github.com/sirupsen/logrus"
 
+	"github.com/dimkouv/trackpal/internal/conf"
 	"github.com/dimkouv/trackpal/internal/consts"
 	"github.com/dimkouv/trackpal/internal/models"
 	"github.com/dimkouv/trackpal/pkg/cryptoutils"
@@ -25,7 +26,7 @@ func (repo AccountsRepositoryPostgres) ActivateUserAccount(email, token string) 
 	if err != nil {
 		return err
 	}
-	if xidToken.Time().Before(time.Now().UTC().Add(-10 * time.Minute)) {
+	if xidToken.Time().Before(time.Now().UTC().Add(-conf.ActivationTokenTTL)) {
 		return ErrTokenExpired
 	}
 
