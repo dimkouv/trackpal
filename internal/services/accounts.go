@@ -14,10 +14,12 @@ import (
 	"github.com/dimkouv/trackpal/internal/consts"
 	"github.com/dimkouv/trackpal/internal/models"
 	"github.com/dimkouv/trackpal/internal/repository"
+	"github.com/dimkouv/trackpal/pkg/mailutils"
 )
 
 type UserAccountService struct {
-	repo repository.UserAccountRepository
+	repo   repository.UserAccountRepository
+	mailer mailutils.MailSender
 }
 
 func (s *UserAccountService) CreateUserAccount(_ context.Context, rc io.Reader) error {
@@ -74,8 +76,19 @@ func (s *UserAccountService) CreateUserAccount(_ context.Context, rc io.Reader) 
 		return consts.ErrEnumGenericError
 	}
 
-	// TBD: send it with email, sms, etc...
-	logrus.Infof("user account created: activationToken=%v", createdUA.ActivationToken)
+	go func() {
+		err := s.mailer.Send(&mailutils.SendInput{
+			From:    conf.MailFrom,
+			To:      createdUA.Email,
+			Subject: "Activate your Trackpal account",
+			Content: "Your activation token is: " + createdUA.ActivationToken,
+			IsHTML:  false,
+		})
+		if err != nil {
+			logrus.WithField(consts.LogFieldErr, err).Error("unable to send mail")
+		}
+	}()
+
 	return nil
 }
 
@@ -189,16 +202,22 @@ func (s *UserAccountService) RefreshJWT(ctx context.Context) ([]byte, error) {
 }
 
 // NewUserAccountService receives a repository and returns a user account service
-func NewUserAccountService(repo repository.UserAccountRepository) *UserAccountService {
-	return &UserAccountService{repo: repo}
+func NewUserAccountService(repo repository.UserAccountRepository, mailer mailutils.MailSender) *UserAccountService {
+	return &UserAccountService{
+		mailer: mailer,
+		repo:   repo,
+	}
 }
 
 // NewUserAccountServicePostgres returns a user account service with a postgres repository
-func NewUserAccountServicePostgres(postgresDSN string) (*UserAccountService, error) {
+func NewUserAccountServicePostgres(postgresDSN string, mailer mailutils.MailSender) (*UserAccountService, error) {
 	repo, err := repository.NewAccountsRepositoryPostgres(postgresDSN)
 	if err != nil {
 		return nil, err
 	}
 
-	return &UserAccountService{repo: repo}, nil
+	return &UserAccountService{
+		mailer: mailer,
+		repo:   repo,
+	}, nil
 }

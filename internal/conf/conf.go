@@ -31,5 +31,11 @@ var (
 
 	AccessControlAllowOrigin = "*"
 
+	// JwtTTL After this duration passes JWTs are expired
 	JwtTTL = 5 * time.Minute
+)
+
+// nolint: gochecknoglobals
+var (
+	MailFrom = envlib.GetEnvOrDefault("TRACKPAL_MAIL_SENDER", "bot@trackpal.xyz")
 )

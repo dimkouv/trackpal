@@ -13,4 +13,9 @@ var (
 		"TRACKPAL_SERVER_ADDR",
 		"127.0.0.1:8080",
 	)
+
+	smtpPort     = envlib.GetEnvOrDefault("TRACKPAL_SMTP_PORT", "587")
+	smtpHost     = envlib.GetEnvOrDefault("TRACKPAL_SMTP_HOST", "")
+	smtpUser     = envlib.GetEnvOrDefault("TRACKPAL_SMTP_USER", "")
+	smtpPassword = envlib.GetEnvOrDefault("TRACKPAL_SMTP_PASSWORD", "")
 )

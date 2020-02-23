@@ -1,10 +1,12 @@
 package main
 
 import (
-	"github.com/sirupsen/logrus"
+	"strconv"
 
 	"github.com/dimkouv/trackpal/internal/server"
 	"github.com/dimkouv/trackpal/internal/services"
+	"github.com/dimkouv/trackpal/pkg/mailutils"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -15,12 +17,25 @@ func main() {
 		TimestampFormat: "2 Jan 2006 15:04:05",
 	})
 
+	mailSender := mailutils.NewPlainMailSender(mailutils.SMTPSettings{
+		Port: func() int {
+			p, err := strconv.Atoi(smtpPort)
+			if err != nil {
+				panic(err)
+			}
+			return p
+		}(),
+		Host:     smtpHost,
+		User:     smtpUser,
+		Password: smtpPassword,
+	})
+
 	trackingService, err := services.NewTrackingServicePostgres(postgresDSN)
 	if err != nil {
 		panic(err)
 	}
 
-	uaService, err := services.NewUserAccountServicePostgres(postgresDSN)
+	uaService, err := services.NewUserAccountServicePostgres(postgresDSN, mailSender)
 	if err != nil {
 		panic(err)
 	}
