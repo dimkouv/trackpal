@@ -32,21 +32,16 @@ func (s *UserAccountService) CreateUserAccount(_ context.Context, rc io.Reader) 
 
 	requestData, err := ioutil.ReadAll(rc)
 	if err != nil {
-		logrus.
-			WithField(consts.LogFieldErr, err).
-			Errorf("unable to read request body")
+		logrus.WithField(consts.LogFieldErr, err).Errorf("unable to read request body")
 		return consts.ErrEnumInvalidBody
 	}
 
 	uaReq := createUserAccountInput{}
 	if err = json.Unmarshal(requestData, &uaReq); err != nil {
-		logrus.
-			WithField(consts.LogFieldBody, fmt.Sprintf("%s", requestData)).
-			WithField(consts.LogFieldErr, err).
-			Errorf("unable to parse request body")
+		logrus.WithField(consts.LogFieldBody, fmt.Sprintf("%s", requestData)).
+			WithField(consts.LogFieldErr, err).Errorf("unable to parse request body")
 		return consts.ErrEnumInvalidBody
 	}
-
 	ua := models.UserAccount{
 		Email:     uaReq.Email,
 		FirstName: uaReq.FirstName,
@@ -54,10 +49,8 @@ func (s *UserAccountService) CreateUserAccount(_ context.Context, rc io.Reader) 
 	}
 
 	if !consts.RgxEmail.MatchString(uaReq.Email) {
-		logrus.
-			WithField(consts.LogFieldBody, fmt.Sprintf("%s", requestData)).
-			WithField(consts.LogFieldErr, err).
-			Errorf("unable to parse request body")
+		logrus.WithField(consts.LogFieldBody, fmt.Sprintf("%s", requestData)).
+			WithField(consts.LogFieldErr, err).Errorf("unable to parse request body")
 		return consts.ErrEnumInvalidEmail
 	}
 
