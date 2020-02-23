@@ -2,7 +2,7 @@ name: Trackpal
 on: [push]
 jobs:
 
-  test:
+  cicd:
     env:
       POSTGRES_USER: master
       PGPASSWORD: masterkey # required by pgsql
@@ -21,7 +21,7 @@ jobs:
         # required since postgres container does not provide any health checks
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
-    name: Test
+    name: Test, build and deploy
     runs-on: ubuntu-latest
     steps:
 
@@ -34,20 +34,19 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
 
-    - name: Setup identity
-      run: |
-        echo ${{ secrets.SERVER_PEM }} > ~/trackpal.pem
-        chmod 600 ~/trackpal.pem
-        printf "Host aws.trackpal\n" + \
-          "  Hostname ${{ secrets.SERVER_HOSTNAME }}\n" + \
-          "  User ${{ secrets.SERVER_USER }}\n" + \
-          "  IdentityFile ~/trackpal.pem" > ~/.ssh/config
-
     - name: Install tools and deps
       run: |
+        sudo apt-get update
         curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.21.0
         sudo apt-get install -y postgresql-client
         go mod vendor
+
+    - name: Setup identity
+      run: |
+        which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y );
+        eval $(ssh-agent -s);
+        echo "${{ secrets.TRACKPAL_PEM }}" > ~/trackpal.pem;
+        cat ~/trackpal.pem;
 
     - name: Lint
       run: |
@@ -75,6 +74,25 @@ jobs:
       run: |
         make build
 
-    - name: Deploy
-      run: |
-        make deploy
+    - name: Deploy (upload)
+      uses: appleboy/scp-action@master
+      env:
+        HOST: ${{ secrets.REMOTE_HOST }}
+        USERNAME: ${{ secrets.REMOTE_USER }}
+        PORT: ${{ secrets.REMOTE_PORT }}
+        KEY: ${{ secrets.SERVER_SSH_KEY }}
+      with:
+        source: "target/trackpal"
+        target: "trackpal/trackpal-new"
+
+    - name: Deploy (use new version)
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.REMOTE_HOST }}
+        USERNAME: ${{ secrets.REMOTE_USER }}
+        PORT: ${{ secrets.REMOTE_PORT }}
+        KEY: ${{ secrets.SERVER_SSH_KEY }}
+        script: |
+          sudo systemctl stop trackpal
+          mv trackpal/trackpal-new/target/trackpal trackpal/trackpal
+          sudo systemctl start trackpal
