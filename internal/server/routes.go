@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 
@@ -86,14 +87,6 @@ func (ts TrackpalServer) RegisterRoutes() *mux.Router {
 	ts.routes = append(ts.routes, ts.alertingRoutes()...)
 
 	router := mux.NewRouter().StrictSlash(true)
-	router.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", conf.AccessControlAllowOrigin)
-		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, "+
-			"Accept-Encoding, X-CSRF-Token, Authorization, Access-Control-Request-Headers, "+
-			"Access-Control-Request-Method, Connection, Host, Origin, User-Agent, Referer, Cache-Control, X-header")
-		w.WriteHeader(http.StatusNoContent)
-	})
 
 	for _, route := range ts.routes {
 		router.
@@ -109,7 +102,11 @@ func (ts TrackpalServer) RegisterRoutes() *mux.Router {
 // ListenAndServe starts listening for incoming requests
 func (ts TrackpalServer) ListenAndServe(addr string, router http.Handler) {
 	logrus.Infof("Server running: addr=%s", addr)
-	if err := http.ListenAndServe(addr, router); err != nil {
+	if err := http.ListenAndServe(addr, handlers.CORS(
+		handlers.AllowedOrigins([]string{conf.AccessControlAllowOrigin}),
+		handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
+		handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Accept", "Origin", "Authorization"}),
+	)(router)); err != nil {
 		panic(err)
 	}
 }
