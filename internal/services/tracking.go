@@ -198,6 +198,61 @@ func (service TrackingService) GetAllTrackInputsOfDeviceAsJSON(
 	return b, nil
 }
 
+// EnableAlerting enables alerting for a device. Enabling alerting locks the current position
+// of the device (specified in the arguments), after that if the device is moved
+// an alert is sent to the owner of the device.
+func (service TrackingService) EnableAlerting(
+	ctx context.Context, vars map[string]string, rc io.Reader) error {
+	requestData, err := ioutil.ReadAll(rc)
+	if err != nil {
+		logrus.WithField(consts.LogFieldErr, err).
+			Errorf("unable to read request body")
+		return consts.ErrEnumInvalidBody
+	}
+
+	deviceID, err := strconv.Atoi(vars["deviceID"])
+	if err != nil {
+		logrus.WithField(consts.LogFieldVars, vars).
+			WithField(consts.LogFieldErr, err).
+			Errorf("unable to parse deviceID")
+		return consts.ErrEnumInvalidVars
+	}
+
+	device, err := service.repo.GetDeviceByID(int64(deviceID))
+	if err != nil {
+		logrus.WithField(consts.LogFieldErr, err).
+			Errorf("unable to get device by id")
+		return consts.ErrEnumNotFound
+	}
+
+	ua := ctx.Value(consts.CtxUser).(models.UserAccount)
+	if device.UserID != ua.ID {
+		logrus.WithField("user_id", ua.ID).
+			WithField("device_owner", device.UserID).
+			Errorf("unauthorized to enable alerting")
+		return consts.ErrEnumNotFound
+	}
+
+	t := models.TrackInput{}
+	err = json.Unmarshal(requestData, &t)
+	if err != nil || t.Lat == 0 || t.Lng == 0 {
+		logrus.WithField(consts.LogFieldBody, fmt.Sprintf("%s", requestData)).
+			WithField(consts.LogFieldErr, err).
+			Errorf("unable to parse request body")
+		return consts.ErrEnumInvalidBody
+	}
+
+	device.Lat, device.Lng = t.Lat, t.Lng
+	device.AlertingEnabled = true
+	err = service.repo.UpdateDevice(int64(deviceID), *device)
+	if err != nil {
+		logrus.WithField(consts.LogFieldErr, err).Errorf("unable to update device")
+		return consts.ErrEnumInternal
+	}
+
+	return nil
+}
+
 // checkForAlert checks whether or not the user should be alerted based on the trackInput
 func (service TrackingService) checkForAlert(
 	ua models.UserAccount, device *models.Device, trackInput *models.TrackInput) {
