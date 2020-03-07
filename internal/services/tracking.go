@@ -9,7 +9,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/dimkouv/trackpal/internal/conf"
 	"github.com/dimkouv/trackpal/internal/consts"
+	"github.com/dimkouv/trackpal/pkg/mailutils"
 
 	"github.com/sirupsen/logrus"
 
@@ -18,7 +20,8 @@ import (
 )
 
 type TrackingService struct {
-	repo repository.TrackingRepository
+	repo   repository.TrackingRepository
+	mailer mailutils.MailSender
 }
 
 func (service TrackingService) GetDevicesAsJSON(ctx context.Context) ([]byte, error) {
@@ -266,10 +269,20 @@ func (service TrackingService) checkForAlert(
 
 	if trackInput.Location.HasMovedMoreThanM(device.Location, 3) {
 		logrus.Infof("[alert] ua=%v device=%v", ua, device)
-		// TODO: email/sms/...
+		err := service.mailer.Send(&mailutils.SendInput{
+			From:    conf.MailFrom,
+			To:      ua.Email,
+			Subject: fmt.Sprintf("Trackpal Alert - %s is moving!", device.Name),
+			Content: fmt.Sprintf("<strong>Your device with name %s is moving!</strong><br>"+
+				"Close alerting for this device to stop receiving such notifications.", device.Name),
+			IsHTML: true,
+		})
+		if err != nil {
+			logrus.WithField(consts.LogFieldErr, err).Error("unable to send mail")
+		}
 
 		device.LastAlertTimestamp = time.Now().UTC()
-		if err := service.repo.UpdateDevice(device.ID, *device); err != nil {
+		if err = service.repo.UpdateDevice(device.ID, *device); err != nil {
 			logrus.WithField(consts.LogFieldErr, err).
 				Errorf("unable to update device")
 			return
@@ -278,16 +291,22 @@ func (service TrackingService) checkForAlert(
 }
 
 // NewTrackingService receives a repository and returns a tracking service
-func NewTrackingService(repo repository.TrackingRepository) *TrackingService {
-	return &TrackingService{repo: repo}
+func NewTrackingService(repo repository.TrackingRepository, mailer mailutils.MailSender) *TrackingService {
+	return &TrackingService{
+		repo:   repo,
+		mailer: mailer,
+	}
 }
 
 // NewTrackingServicePostgres returns a tracking service with a postgres repository
-func NewTrackingServicePostgres(postgresDSN string) (*TrackingService, error) {
+func NewTrackingServicePostgres(postgresDSN string, mailer mailutils.MailSender) (*TrackingService, error) {
 	repo, err := repository.NewTrackingRepositoryPostgres(postgresDSN)
 	if err != nil {
 		return nil, err
 	}
 
-	return &TrackingService{repo: repo}, nil
+	return &TrackingService{
+		repo:   repo,
+		mailer: mailer,
+	}, nil
 }

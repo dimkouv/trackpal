@@ -3,10 +3,11 @@ package main
 import (
 	"strconv"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/dimkouv/trackpal/internal/server"
 	"github.com/dimkouv/trackpal/internal/services"
 	"github.com/dimkouv/trackpal/pkg/mailutils"
-	"github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -30,7 +31,7 @@ func main() {
 		Password: smtpPassword,
 	})
 
-	trackingService, err := services.NewTrackingServicePostgres(postgresDSN)
+	trackingService, err := services.NewTrackingServicePostgres(postgresDSN, mailSender)
 	if err != nil {
 		panic(err)
 	}
