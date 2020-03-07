@@ -308,6 +308,49 @@ paths:
         '500':
           description: Internal server error
 
+  /tracking/devices/{deviceID}/alerting/enable:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTrackingDeviceRecordInput'
+      tags:
+        - Alerting
+      summary: "Enable alerting"
+      description: >
+        Enables alerting for a target device. You have to also
+        specify the current position of the device. If the device
+        is moved from this position an alert is sent to the user.
+      parameters:
+        - name: deviceID
+          in: path
+          required: true
+          description: ID of the target device
+          schema:
+            type: number
+      operationId: postAlertingEnable
+      responses:
+        '200':
+          description: Alerting was enabled
+        '400':
+          description: Something bad happened
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    enum: [INVALID_BODY, INVALID_VARS]
+        '404':
+          description: The device was not found (or not owned by you)
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
+
 components:
   schemas:
     AuthRegisterRequest:

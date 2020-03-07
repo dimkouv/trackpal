@@ -67,11 +67,23 @@ func (ts TrackpalServer) trackingRoutes() []Route {
 	}
 }
 
+func (ts TrackpalServer) alertingRoutes() []Route {
+	return []Route{
+		{
+			Pattern:     "/tracking/devices/{deviceID:[0-9]+}/alerting/enable",
+			HandlerFunc: ts.withUser(ts.enableAlerting),
+			Method:      "POST",
+			Name:        "postAlertingEnable",
+		},
+	}
+}
+
 // RegisterRoutes register all the routes that are declared in this package
 func (ts TrackpalServer) RegisterRoutes() *mux.Router {
 	ts.routes = []Route{}
 	ts.routes = append(ts.routes, ts.authRoutes()...)
 	ts.routes = append(ts.routes, ts.trackingRoutes()...)
+	ts.routes = append(ts.routes, ts.alertingRoutes()...)
 
 	router := mux.NewRouter().StrictSlash(true)
 	router.Methods("OPTIONS").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

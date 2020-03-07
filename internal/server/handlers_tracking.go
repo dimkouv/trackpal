@@ -27,3 +27,9 @@ func (ts TrackpalServer) addTrackRecordOfDevice(w http.ResponseWriter, req *http
 	b, err := ts.trackingService.SaveTrackInput(req.Context(), vars, req.Body)
 	ts.responseBasedOnErr(err, b, http.StatusCreated, w)
 }
+
+func (ts TrackpalServer) enableAlerting(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	err := ts.trackingService.EnableAlerting(req.Context(), vars, req.Body)
+	ts.responseBasedOnErr(err, nil, http.StatusOK, w)
+}
