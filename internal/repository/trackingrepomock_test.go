@@ -176,3 +176,31 @@ func TestTrackingRepositoryMock_GetDeviceByID(t *testing.T) {
 		assert.Equal(t, ErrDeviceDoesNotExist, err)
 	})
 }
+
+func TestTrackingRepositoryMock_UpdateDevice(t *testing.T) {
+	repo := NewTrackingRepositoryMock()
+	dev, err := repo.SaveNewDevice(models.Device{
+		Name: "my device",
+	})
+	assert.NoError(t, err)
+
+	t.Run("should update the device details", func(t *testing.T) {
+		_, err := repo.UpdateDevice(dev.ID, models.Device{
+			Name:            "my new device name",
+			AlertingEnabled: true,
+		})
+		assert.NoError(t, err)
+		dev2, err := repo.GetDeviceByID(dev.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, "my new device name", dev2.Name)
+		assert.True(t, dev2.AlertingEnabled)
+	})
+
+	t.Run("should not overwrite the device id", func(t *testing.T) {
+		_, err := repo.UpdateDevice(dev.ID, models.Device{ID: 123})
+		assert.NoError(t, err)
+		dev2, err := repo.GetDeviceByID(dev.ID)
+		assert.Equal(t, dev.ID, dev2.ID)
+	})
+
+}

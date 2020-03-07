@@ -21,6 +21,9 @@ type TrackingRepository interface {
 	// SaveNewDevice stores a new Device
 	SaveNewDevice(d models.Device) (*models.Device, error)
 
+	// UpdateDevice updates an existing device
+	UpdateDevice(deviceID int64, device models.Device) (*models.Device, error)
+
 	// GetDevices returns all the devices of the specified user
 	GetDevices(userID int64) ([]models.Device, error)
 
