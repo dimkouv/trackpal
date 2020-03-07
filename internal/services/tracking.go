@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"strconv"
+	"time"
 
 	"github.com/dimkouv/trackpal/internal/consts"
 
@@ -95,16 +96,14 @@ func (service TrackingService) SaveTrackInput(
 	ctx context.Context, vars map[string]string, rc io.Reader) ([]byte, error) {
 	requestData, err := ioutil.ReadAll(rc)
 	if err != nil {
-		logrus.
-			WithField(consts.LogFieldErr, err).
+		logrus.WithField(consts.LogFieldErr, err).
 			Errorf("unable to read request body")
 		return nil, consts.ErrEnumInvalidBody
 	}
 
 	deviceID, err := strconv.Atoi(vars["deviceID"])
 	if err != nil {
-		logrus.
-			WithField(consts.LogFieldVars, vars).
+		logrus.WithField(consts.LogFieldVars, vars).
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to parse deviceID")
 		return nil, consts.ErrEnumInvalidVars
@@ -112,16 +111,14 @@ func (service TrackingService) SaveTrackInput(
 
 	device, err := service.repo.GetDeviceByID(int64(deviceID))
 	if err != nil {
-		logrus.
-			WithField(consts.LogFieldErr, err).
+		logrus.WithField(consts.LogFieldErr, err).
 			Errorf("unable to get device by id")
 		return nil, consts.ErrEnumNotFound
 	}
 
 	ua := ctx.Value(consts.CtxUser).(models.UserAccount)
 	if device.UserID != ua.ID {
-		logrus.
-			WithField("user_id", ua.ID).
+		logrus.WithField("user_id", ua.ID).
 			WithField("device_owner", device.UserID).
 			Errorf("unauthorized to save track input")
 		return nil, consts.ErrEnumNotFound
@@ -130,8 +127,7 @@ func (service TrackingService) SaveTrackInput(
 	t := models.TrackInput{}
 	err = json.Unmarshal(requestData, &t)
 	if err != nil {
-		logrus.
-			WithField(consts.LogFieldBody, fmt.Sprintf("%s", requestData)).
+		logrus.WithField(consts.LogFieldBody, fmt.Sprintf("%s", requestData)).
 			WithField(consts.LogFieldErr, err).
 			Errorf("unable to parse request body")
 		return nil, consts.ErrEnumInvalidBody
@@ -143,10 +139,11 @@ func (service TrackingService) SaveTrackInput(
 		return nil, consts.ErrEnumInternal
 	}
 
+	go service.checkForAlert(ua, device, ti)
+
 	b, err := json.Marshal(ti)
 	if err != nil {
-		logrus.
-			WithField(consts.LogFieldErr, err).
+		logrus.WithField(consts.LogFieldErr, err).
 			Errorf("unable to marshal track input")
 		return nil, consts.ErrEnumInternal
 	}
@@ -199,6 +196,30 @@ func (service TrackingService) GetAllTrackInputsOfDeviceAsJSON(
 	}
 
 	return b, nil
+}
+
+// checkForAlert checks whether or not the user should be alerted based on the trackInput
+func (service TrackingService) checkForAlert(
+	ua models.UserAccount, device *models.Device, trackInput *models.TrackInput) {
+	if !device.AlertingEnabled {
+		return
+	}
+
+	if time.Since(device.LastAlertTimestamp).Minutes() < 5.0 {
+		return
+	}
+
+	if trackInput.Location.HasMovedMoreThanM(device.Location, 3) {
+		logrus.Infof("[alert] ua=%v device=%v", ua, device)
+		// TODO: email/sms/...
+
+		device.LastAlertTimestamp = time.Now().UTC()
+		if err := service.repo.UpdateDevice(device.ID, *device); err != nil {
+			logrus.WithField(consts.LogFieldErr, err).
+				Errorf("unable to update device")
+			return
+		}
+	}
 }
 
 // NewTrackingService receives a repository and returns a tracking service
