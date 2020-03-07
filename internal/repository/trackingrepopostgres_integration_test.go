@@ -135,16 +135,6 @@ func TestTrackingRepositoryPostgres_SaveNewTrackInput(t *testing.T) {
 		assert.Equal(t, ErrDeviceDoesNotExist, err)
 	})
 
-	t.Run("saving an invalid track input for an existing device should respond with error", func(t *testing.T) {
-		_, err := repo.SaveNewTrackInput(models.TrackInput{
-			Location:   models.Location{},
-			RecordedAt: time.Now(),
-			DeviceID:   devices[0].ID,
-		})
-		assert.Error(t, err)
-		assert.NotEqual(t, ErrDeviceDoesNotExist, err)
-	})
-
 	t.Run("saving a valid track input for an existing device should succeed", func(t *testing.T) {
 		_, err := repo.SaveNewTrackInput(models.TrackInput{
 			Location: models.Location{
@@ -229,4 +219,32 @@ func TestTrackingRepositoryPostgres_GetDeviceByID(t *testing.T) {
 		_, err := repo.GetDeviceByID(-1234)
 		assert.Equal(t, ErrDeviceDoesNotExist, err)
 	})
+}
+
+func TestTrackingRepositoryPostgres_UpdateDevice(t *testing.T) {
+	dev, err := repo.SaveNewDevice(models.Device{Name: "my device", UserID: ua.ID})
+	assert.NoError(t, err)
+
+	t.Run("should update the device details", func(t *testing.T) {
+		err = repo.UpdateDevice(dev.ID, models.Device{
+			Name:            "my new device name",
+			AlertingEnabled: true,
+		})
+		assert.NoError(t, err)
+		dev2, err := repo.GetDeviceByID(dev.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, "my new device name", dev2.Name)
+		assert.True(t, dev2.AlertingEnabled)
+	})
+
+	t.Run("should not overwrite the device id", func(t *testing.T) {
+		err = repo.UpdateDevice(dev.ID, models.Device{ID: 123, Name: "my new name"})
+		assert.NoError(t, err)
+		dev2, err := repo.GetDeviceByID(dev.ID)
+		if !assert.NoError(t, err) {
+			fmt.Println(">>>", err)
+		}
+		assert.Equal(t, dev.ID, dev2.ID)
+	})
+
 }

@@ -73,16 +73,16 @@ func (repo *TrackingRepositoryMock) GetAllTrackInputsOfDevice(deviceID int64) ([
 }
 
 // UpdateDevice updates an existing device
-func (repo *TrackingRepositoryMock) UpdateDevice(deviceID int64, device models.Device) (*models.Device, error) {
+func (repo *TrackingRepositoryMock) UpdateDevice(deviceID int64, device models.Device) error {
 	for i, dev := range repo.devices {
 		if dev.ID == deviceID {
 			device.ID = deviceID
 			repo.devices[i] = device
-			return &repo.devices[i], nil
+			return nil
 		}
 	}
 
-	return nil, ErrDeviceDoesNotExist
+	return ErrDeviceDoesNotExist
 }
 
 // NewTrackingRepositoryMock returns a new instance of a mock tracking repository

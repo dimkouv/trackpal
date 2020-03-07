@@ -185,7 +185,7 @@ func TestTrackingRepositoryMock_UpdateDevice(t *testing.T) {
 	assert.NoError(t, err)
 
 	t.Run("should update the device details", func(t *testing.T) {
-		_, err := repo.UpdateDevice(dev.ID, models.Device{
+		err = repo.UpdateDevice(dev.ID, models.Device{
 			Name:            "my new device name",
 			AlertingEnabled: true,
 		})
@@ -197,9 +197,10 @@ func TestTrackingRepositoryMock_UpdateDevice(t *testing.T) {
 	})
 
 	t.Run("should not overwrite the device id", func(t *testing.T) {
-		_, err := repo.UpdateDevice(dev.ID, models.Device{ID: 123})
+		err = repo.UpdateDevice(dev.ID, models.Device{ID: 123})
 		assert.NoError(t, err)
 		dev2, err := repo.GetDeviceByID(dev.ID)
+		assert.NoError(t, err)
 		assert.Equal(t, dev.ID, dev2.ID)
 	})
 
