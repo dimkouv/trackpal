@@ -13,6 +13,10 @@ type Device struct {
 	Name      string    `json:"name" db:"name"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 
+	AlertingEnabled    bool `json:"alertingEnabled" db:"alerting_enabled"`
+	Location           `json:"location"`
+	LastAlertTimestamp time.Time `json:"lastAlertTimestamp" db:"last_alert_timestamp"`
+
 	UserID int64 `json:"-" db:"user_id"`
 }
 
