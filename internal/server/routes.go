@@ -76,6 +76,12 @@ func (ts TrackpalServer) alertingRoutes() []Route {
 			Method:      "POST",
 			Name:        "postAlertingEnable",
 		},
+		{
+			Pattern:     "/tracking/devices/{deviceID:[0-9]+}/alerting/disable",
+			HandlerFunc: ts.withUser(ts.disableAlerting),
+			Method:      "POST",
+			Name:        "postAlertingDisable",
+		},
 	}
 }
 

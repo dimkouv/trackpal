@@ -33,3 +33,9 @@ func (ts TrackpalServer) enableAlerting(w http.ResponseWriter, req *http.Request
 	err := ts.trackingService.EnableAlerting(req.Context(), vars, req.Body)
 	ts.responseBasedOnErr(err, nil, http.StatusOK, w)
 }
+
+func (ts TrackpalServer) disableAlerting(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	err := ts.trackingService.DisableAlerting(req.Context(), vars)
+	ts.responseBasedOnErr(err, nil, http.StatusOK, w)
+}
