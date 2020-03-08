@@ -256,6 +256,42 @@ func (service TrackingService) EnableAlerting(
 	return nil
 }
 
+// DisableAlerting disables alerting for a device. Disabling alerting means that if the device is moved
+// no emails are going to be sent to the owner of it.
+func (service TrackingService) DisableAlerting(ctx context.Context, vars map[string]string) error {
+	deviceID, err := strconv.Atoi(vars["deviceID"])
+	if err != nil {
+		logrus.WithField(consts.LogFieldVars, vars).
+			WithField(consts.LogFieldErr, err).
+			Errorf("unable to parse deviceID")
+		return consts.ErrEnumInvalidVars
+	}
+
+	device, err := service.repo.GetDeviceByID(int64(deviceID))
+	if err != nil {
+		logrus.WithField(consts.LogFieldErr, err).
+			Errorf("unable to get device by id")
+		return consts.ErrEnumNotFound
+	}
+
+	ua := ctx.Value(consts.CtxUser).(models.UserAccount)
+	if device.UserID != ua.ID {
+		logrus.WithField("user_id", ua.ID).
+			WithField("device_owner", device.UserID).
+			Errorf("unauthorized to enable alerting")
+		return consts.ErrEnumNotFound
+	}
+
+	device.AlertingEnabled = false
+	err = service.repo.UpdateDevice(int64(deviceID), *device)
+	if err != nil {
+		logrus.WithField(consts.LogFieldErr, err).Errorf("unable to update device")
+		return consts.ErrEnumInternal
+	}
+
+	return nil
+}
+
 // checkForAlert checks whether or not the user should be alerted based on the trackInput
 func (service TrackingService) checkForAlert(
 	ua models.UserAccount, device *models.Device, trackInput *models.TrackInput) {
