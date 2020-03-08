@@ -441,6 +441,17 @@ components:
           type: number
         name:
           type: string
+        alertingEnabled:
+          type: bool
+        location:
+          type: object
+          properties:
+            lat:
+              type: number
+              format: float
+            lng:
+              type: number
+              format: float
 
     TrackingDeviceRecord:
       type: object
